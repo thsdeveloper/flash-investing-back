@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.local
+.env.example
+README.md
+.git
+.gitignore
+yarn-error.log
+npm-debug.log
+Dockerfile
+.dockerignore
