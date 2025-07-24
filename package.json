@@ -1,0 +1,40 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
+    "@fastify/autoload": "^6.3.1",
+    "@fastify/cors": "^11.0.1",
+    "@fastify/swagger": "^9.5.1",
+    "@fastify/swagger-ui": "^5.2.3",
+    "@prisma/client": "^6.11.1",
+    "axios": "^1.10.0",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.0",
+    "fastify": "^5.4.0",
+    "fastify-plugin": "^5.0.1",
+    "fastify-type-provider-zod": "^5.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^4.0.5"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^8.5.8",
+    "@types/node": "^24.0.13",
+    "prisma": "^6.11.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

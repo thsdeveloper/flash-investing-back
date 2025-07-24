@@ -1,0 +1,50 @@
+import { CreditCardTransaction } from '../../domain/entities/credit-card-transaction';
+import { CreditCardTransactionRepository } from '../../domain/contracts/credit-card-transaction-repository';
+import { CreditCardTransactionResponseDto } from '../dtos/credit-card-transaction-dtos';
+
+export class GetCreditCardTransactionByIdUseCase {
+  constructor(
+    private readonly creditCardTransactionRepository: CreditCardTransactionRepository
+  ) {}
+
+  async execute(userId: string, transactionId: string): Promise<CreditCardTransactionResponseDto> {
+    const transaction = await this.creditCardTransactionRepository.findByUserIdAndId(userId, transactionId);
+    
+    if (!transaction) {
+      throw new Error('Transação de cartão de crédito não encontrada');
+    }
+
+    return this.toResponseDto(transaction);
+  }
+
+  private toResponseDto(transaction: CreditCardTransaction): CreditCardTransactionResponseDto {
+    const id = transaction.getId();
+    if (!id) {
+      throw new Error('Transaction must have an ID');
+    }
+    
+    return {
+      id,
+      descricao: transaction.getDescricao(),
+      valor: transaction.getValor(),
+      categoria: transaction.getCategoria(),
+      subcategoria: transaction.getSubcategoria(),
+      dataCompra: transaction.getDataCompra().toISOString(),
+      parcelas: transaction.getParcelas(),
+      parcelaAtual: transaction.getParcelaAtual(),
+      estabelecimento: transaction.getEstabelecimento(),
+      observacoes: transaction.getObservacoes(),
+      creditCardId: transaction.getCreditCardId(),
+      invoiceId: transaction.getInvoiceId(),
+      userId: transaction.getUserId(),
+      createdAt: transaction.getCreatedAt().toISOString(),
+      updatedAt: transaction.getUpdatedAt().toISOString(),
+      // Campos calculados
+      isParcelada: transaction.isParcelada(),
+      isUltimaParcela: transaction.isUltimaParcela(),
+      parcelaDescricao: transaction.getParcelaDescricao(),
+      valorParcela: transaction.getValorParcela(),
+      valorTotal: transaction.getValorTotal(),
+    };
+  }
+}

@@ -1,0 +1,280 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String             @id @default(uuid())
+  name             String
+  email            String             @unique
+  password         String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  refreshTokens    RefreshToken[]
+  financialAccounts FinancialAccount[]
+  transactions     Transaction[]
+  accountTransfers AccountTransfer[]
+  creditCards      CreditCard[]
+  creditCardInvoices CreditCardInvoice[]
+  creditCardTransactions CreditCardTransaction[]
+  financeSettings UserFinanceSettings?
+  financialCategories FinancialCategory[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model FinancialAccount {
+  id            String                    @id @default(uuid())
+  nome          String
+  tipo          FinancialAccountType
+  instituicao   String?
+  saldoInicial  Decimal                   @default(0)
+  saldoAtual    Decimal                   @default(0)
+  cor           String?
+  icone         String?
+  ativa         Boolean                   @default(true)
+  observacoes   String?
+  userId        String
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  user          User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
+  transfersFrom AccountTransfer[]         @relation("TransferFrom")
+  transfersTo   AccountTransfer[]         @relation("TransferTo")
+  creditCards   CreditCard[]
+
+  @@map("financial_accounts")
+}
+
+model Transaction {
+  id                String            @id @default(uuid())
+  descricao         String
+  valor             Decimal
+  tipo              TransactionType
+  categoria         String?           // Campo mantido temporariamente para migração
+  categoriaId       String?           // Nova FK para FinancialCategory
+  subcategoria      String?
+  data              DateTime
+  observacoes       String?
+  contaFinanceiraId String?
+  userId            String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contaFinanceira   FinancialAccount?   @relation(fields: [contaFinanceiraId], references: [id], onDelete: SetNull)
+  categoriaFinanceira FinancialCategory? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+
+  @@map("transactions")
+}
+
+model AccountTransfer {
+  id            String           @id @default(uuid())
+  valor         Decimal
+  descricao     String?
+  data          DateTime
+  contaOrigemId String
+  contaDestinoId String
+  userId        String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contaOrigem   FinancialAccount @relation("TransferFrom", fields: [contaOrigemId], references: [id], onDelete: Cascade)
+  contaDestino  FinancialAccount @relation("TransferTo", fields: [contaDestinoId], references: [id], onDelete: Cascade)
+
+  @@map("account_transfers")
+}
+
+enum FinancialAccountType {
+  conta_corrente
+  conta_poupanca
+  carteira
+  investimento
+  outras
+
+  @@map("financial_account_types")
+}
+
+enum TransactionType {
+  receita
+  despesa
+  transferencia
+
+  @@map("transaction_types")
+}
+
+model CreditCard {
+  id              String                     @id @default(uuid())
+  nome            String
+  bandeira        CreditCardBrand
+  ultimosDigitos  String                     @map("ultimos_digitos")
+  limiteTotal     Decimal                    @map("limite_total")
+  limiteDisponivel Decimal                   @map("limite_disponivel")
+  diaVencimento   Int                        @map("dia_vencimento")
+  diaFechamento   Int                        @map("dia_fechamento")
+  banco           String?
+  cor             String?
+  ativo           Boolean                    @default(true)
+  observacoes     String?
+  contaFinanceiraId String                   @map("conta_financeira_id")
+  userId          String
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  user            User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contaFinanceira FinancialAccount           @relation(fields: [contaFinanceiraId], references: [id], onDelete: Cascade)
+  invoices        CreditCardInvoice[]
+  transactions    CreditCardTransaction[]
+
+  @@map("credit_cards")
+}
+
+model CreditCardInvoice {
+  id              String                     @id @default(uuid())
+  creditCardId    String                     @map("credit_card_id")
+  mes             Int
+  ano             Int
+  valorTotal      Decimal                    @map("valor_total")
+  valorPago       Decimal                    @default(0) @map("valor_pago")
+  dataVencimento  DateTime                   @map("data_vencimento")
+  dataFechamento  DateTime                   @map("data_fechamento")
+  status          InvoiceStatus
+  observacoes     String?
+  userId          String
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  user            User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCard      CreditCard                 @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  transactions    CreditCardTransaction[]
+
+  @@unique([creditCardId, mes, ano])
+  @@map("credit_card_invoices")
+}
+
+model CreditCardTransaction {
+  id              String                     @id @default(uuid())
+  descricao       String
+  valor           Decimal
+  categoria       String?                    // Campo mantido temporariamente para migração
+  categoriaId     String?                    // Nova FK para FinancialCategory
+  subcategoria    String?
+  dataCompra      DateTime                   @map("data_compra")
+  parcelas        Int                        @default(1)
+  parcelaAtual    Int                        @default(1) @map("parcela_atual")
+  estabelecimento String?
+  observacoes     String?
+  creditCardId    String                     @map("credit_card_id")
+  invoiceId       String?                    @map("invoice_id")
+  userId          String
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  user            User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCard      CreditCard                 @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  invoice         CreditCardInvoice?         @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  categoriaFinanceira FinancialCategory?     @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+
+  @@map("credit_card_transactions")
+}
+
+enum CreditCardBrand {
+  visa
+  mastercard
+  elo
+  american_express
+  diners
+  hipercard
+  outros
+
+  @@map("credit_card_brands")
+}
+
+enum InvoiceStatus {
+  aberta
+  fechada
+  vencida
+  paga
+  paga_parcial
+
+  @@map("invoice_status")
+}
+
+model UserFinanceSettings {
+  id          String   @id @default(uuid())
+  salary      Decimal  @default(0)
+  fixed       Int      @default(50)
+  variable    Int      @default(30)
+  investments Int      @default(20)
+  userId      String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_finance_settings")
+}
+
+model FinancialCategory {
+  id            String              @id @default(uuid())
+  nome          String
+  descricao     String?
+  icone         String?
+  cor           String?
+  tipo          CategoryType
+  ativa         Boolean             @default(true)
+  ruleCategory  CategoryRule?       @map("rule_category")
+  sort          Int?                @default(0)
+  status        CategoryStatus      @default(published)
+  userId        String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  user                    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions            Transaction[]
+  creditCardTransactions  CreditCardTransaction[]
+
+  @@unique([userId, nome])
+  @@map("financial_categories")
+}
+
+enum CategoryType {
+  receita
+  despesa
+
+  @@map("category_types")
+}
+
+enum CategoryRule {
+  necessidades
+  desejos
+  futuro
+
+  @@map("category_rules")
+}
+
+enum CategoryStatus {
+  published
+  draft
+  archived
+
+  @@map("category_status")
+}
