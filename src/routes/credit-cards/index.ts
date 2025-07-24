@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { authMiddleware, AuthenticatedRequest } from '../../infrastructure/http/middlewares/auth-middleware';
+import { authMiddleware } from '../../infrastructure/http/middlewares/auth-middleware';
+import { AuthenticatedRequest } from '../../shared/types/authenticated-request';
 import { 
   createCreditCardSchema, 
   updateCreditCardSchema, 
@@ -75,10 +76,11 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       body: createCreditCardSchema,
       // response schema omitido para evitar conflitos com fastify-type-provider-zod
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
+        const req = request as AuthenticatedRequest;
         const result = await createCreditCardUseCase.execute(
-          request.user!.id,
+          req.user.id,
           request.body as any
         );
         return reply.status(201).send(result);
@@ -99,8 +101,9 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       security: [{ bearerAuth: [] }],
       // response schema omitido para evitar conflitos com fastify-type-provider-zod
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
-      const result = await getCreditCardsUseCase.execute(request.user!.id);
+    handler: async (request, reply) => {
+      const req = request as AuthenticatedRequest;
+      const result = await getCreditCardsUseCase.execute(req.user.id);
       return reply.send(result);
     }
   });
@@ -116,8 +119,9 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       security: [{ bearerAuth: [] }],
       // response schema omitido para evitar conflitos com fastify-type-provider-zod
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
-      const result = await getCreditCardsUseCase.getActiveCards(request.user!.id);
+    handler: async (request, reply) => {
+      const req = request as AuthenticatedRequest;
+      const result = await getCreditCardsUseCase.getActiveCards(req.user.id);
       return reply.send(result);
     }
   });
@@ -133,8 +137,9 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       security: [{ bearerAuth: [] }],
       // response schema omitido para evitar conflitos com fastify-type-provider-zod
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
-      const result = await getCreditCardsUseCase.getUsageSummary(request.user!.id);
+    handler: async (request, reply) => {
+      const req = request as AuthenticatedRequest;
+      const result = await getCreditCardsUseCase.getUsageSummary(req.user.id);
       return reply.send(result);
     }
   });
@@ -151,10 +156,11 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       params: cardIdParamsSchema,
       // response schema omitido para evitar conflitos com fastify-type-provider-zod
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
+        const req = request as AuthenticatedRequest;
         const result = await getCreditCardByIdUseCase.execute(
-          request.user!.id,
+          req.user.id,
           (request.params as any).id
         );
         return reply.send(result);
@@ -177,10 +183,11 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       body: updateCreditCardSchema,
       // response schema omitido para evitar conflitos com fastify-type-provider-zod
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
+        const req = request as AuthenticatedRequest;
         const result = await updateCreditCardUseCase.execute(
-          request.user!.id,
+          req.user.id,
           (request.params as any).id,
           request.body as any
         );
@@ -204,10 +211,11 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       params: cardIdParamsSchema,
       // response schema omitido para evitar conflitos com fastify-type-provider-zod
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
+        const req = request as AuthenticatedRequest;
         await deleteCreditCardUseCase.execute(
-          request.user!.id,
+          req.user.id,
           (request.params as any).id
         );
         return reply.status(204).send();

@@ -40,7 +40,8 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         sandbox: z.boolean().optional().default(false),
       }),
       response: {
-        200: z.array(connectorResponseSchema)
+        200: z.array(connectorResponseSchema),
+        500: z.object({ error: z.string() })
       }
     },
     handler: async (request, reply) => {
@@ -50,7 +51,15 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         return reply.status(200).send(connectors.map(connector => {
           const json = connector.toJSON();
           return {
-            ...json,
+            id: json.id,
+            name: json.name,
+            institutionUrl: json.institutionUrl,
+            imageUrl: json.imageUrl,
+            primaryColor: json.primaryColor,
+            type: json.type,
+            country: json.country,
+            credentials: json.credentials,
+            products: json.products,
             createdAt: json.createdAt?.toISOString(),
             updatedAt: json.updatedAt?.toISOString()
           };
@@ -67,7 +76,15 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
           return reply.status(200).send(mockConnectors.map((connector: any) => {
             const json = connector.toJSON();
             return {
-              ...json,
+              id: json.id,
+              name: json.name,
+              institutionUrl: json.institutionUrl,
+              imageUrl: json.imageUrl,
+              primaryColor: json.primaryColor,
+              type: json.type,
+              country: json.country,
+              credentials: json.credentials,
+              products: json.products,
               createdAt: json.createdAt?.toISOString(),
               updatedAt: json.updatedAt?.toISOString()
             };
@@ -221,7 +238,20 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
       tags: ['Pluggy'],
       querystring: getAccountsSchema,
       response: {
-        200: z.array(accountResponseSchema)
+        200: z.array(accountResponseSchema),
+        202: z.object({
+          message: z.string(),
+          status: z.string(),
+          executionStatus: z.string(),
+          itemId: z.string()
+        }),
+        400: z.object({
+          message: z.string(),
+          status: z.string(),
+          executionStatus: z.string(),
+          itemId: z.string()
+        }),
+        500: z.object({ error: z.string() })
       }
     },
     handler: async (request, reply) => {
@@ -258,7 +288,20 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         return reply.status(200).send(accounts.map(account => {
           const json = account.toJSON();
           return {
-            ...json,
+            id: json.id,
+            type: json.type,
+            subtype: json.subtype,
+            number: json.number,
+            name: json.name,
+            marketingName: json.marketingName,
+            balance: json.balance,
+            itemId: json.itemId,
+            taxNumber: json.taxNumber,
+            owner: json.owner,
+            currencyCode: json.currencyCode,
+            currency: json.currency,
+            creditLimit: json.creditLimit,
+            bank: json.bank,
             createdAt: json.createdAt.toISOString(),
             updatedAt: json.updatedAt.toISOString()
           };
@@ -267,8 +310,7 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         console.error('❌ Failed to get accounts:', error.message);
         fastify.log.error('Failed to get accounts:', error);
         return reply.status(500).send({
-          error: error.message,
-          message: 'Failed to get accounts'
+          error: error.message || 'Failed to get accounts'
         });
       }
     }
@@ -302,8 +344,17 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         return reply.status(200).send(transactions.map(transaction => {
           const json = transaction.toJSON();
           return {
-            ...json,
+            id: json.id,
+            accountId: json.accountId,
             date: json.date.toISOString(),
+            description: json.description,
+            descriptionRaw: json.descriptionRaw,
+            currencyCode: json.currencyCode,
+            amount: json.amount,
+            currency: json.currency,
+            category: json.category,
+            merchant: json.merchant,
+            creditCardMetadata: json.creditCardMetadata,
             createdAt: json.createdAt.toISOString(),
             updatedAt: json.updatedAt.toISOString()
           };

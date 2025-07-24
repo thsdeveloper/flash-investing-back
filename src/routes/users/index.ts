@@ -1,7 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { userResponseSchema } from '../../schemas/auth';
-import { authMiddleware, AuthenticatedRequest } from '../../infrastructure/http/middlewares/auth-middleware';
+import { authMiddleware } from '../../infrastructure/http/middlewares/auth-middleware';
+import { AuthenticatedRequest } from '../../shared/types/authenticated-request';
 
 const userRoutes: FastifyPluginAsync = async function (fastify) {
   fastify.withTypeProvider<ZodTypeProvider>().route({
@@ -23,8 +24,8 @@ const userRoutes: FastifyPluginAsync = async function (fastify) {
         },
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
-      return request.user!;
+    handler: async (request, reply) => {
+      return (request as AuthenticatedRequest).user;
     },
   });
 };

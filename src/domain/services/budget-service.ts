@@ -167,7 +167,7 @@ export class BudgetService {
       if (!category || !category.ruleCategory) return;
 
       const ruleCategory = category.ruleCategory;
-      spentByRule[ruleCategory] += transaction.getValor();
+      spentByRule[ruleCategory as keyof typeof spentByRule] += transaction.getValor();
     });
 
     return spentByRule;

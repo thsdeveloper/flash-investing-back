@@ -119,7 +119,7 @@ export class PluggyHttpClient implements PluggyClient {
       if (authResponse.status === 200 && authResponse.data && authResponse.data.apiKey) {
         this.accessToken = authResponse.data.apiKey;
         console.log('✅ Pluggy authentication successful');
-        console.log('🎫 Token received (first 30 chars):', this.accessToken.substring(0, 30) + '...');
+        console.log('🎫 Token received (first 30 chars):', this.accessToken?.substring(0, 30) + '...');
       } else {
         throw new Error(`Authentication failed: ${JSON.stringify(authResponse.data)}`);
       }

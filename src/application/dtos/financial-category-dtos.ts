@@ -34,8 +34,8 @@ export interface FinancialCategoryResponseDto {
   sort: number
   status: 'published' | 'draft' | 'archived'
   userId: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string
+  updatedAt: string
 }
 
 export interface ListFinancialCategoriesDto {

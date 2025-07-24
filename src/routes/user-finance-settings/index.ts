@@ -39,11 +39,11 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
       }
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const result = await createUseCase.execute({
           ...request.body,
-          userId: request.user.id
+          userId: (request as AuthenticatedRequest).user.id
         })
         return reply.status(201).send(result)
       } catch (error) {
@@ -69,8 +69,8 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
       }
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
-      const result = await getUseCase.execute(request.user.id)
+    handler: async (request, reply) => {
+      const result = await getUseCase.execute((request as AuthenticatedRequest).user.id)
       
       if (!result) {
         return reply.status(404).send({ error: 'Finance settings not found' })
@@ -99,12 +99,12 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
       }
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const result = await updateUseCase.execute(
-          request.params.id,
-          request.user.id,
-          request.body
+          (request.params as any).id,
+          (request as AuthenticatedRequest).user.id,
+          request.body as any
         )
         return reply.send(result)
       } catch (error) {
@@ -140,9 +140,9 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
       }
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        await deleteUseCase.execute(request.params.id, request.user.id)
+        await deleteUseCase.execute((request.params as any).id, (request as AuthenticatedRequest).user.id)
         return reply.status(204).send()
       } catch (error) {
         if (error instanceof Error) {

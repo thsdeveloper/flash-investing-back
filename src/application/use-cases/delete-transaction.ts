@@ -31,10 +31,7 @@ export class DeleteTransactionUseCase {
       // Reverter o efeito da transação no saldo da conta
       const contaFinanceiraId = transaction.getContaFinanceiraId();
       if (contaFinanceiraId) {
-        const account = await this.financialAccountRepository.findByUserIdAndId(
-          dto.userId,
-          contaFinanceiraId
-        );
+        const account = await this.financialAccountRepository.findByUserIdAndId(dto.userId, contaFinanceiraId);
         if (account) {
           if (transaction.isReceita()) {
             account.subtrairValor(transaction.getValor());

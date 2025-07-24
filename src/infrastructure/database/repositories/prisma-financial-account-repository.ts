@@ -1,4 +1,5 @@
-import { PrismaClient, FinancialAccountType as PrismaFinancialAccountType, Decimal } from '@prisma/client';
+import { PrismaClient, FinancialAccountType as PrismaFinancialAccountType } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 import { FinancialAccount, FinancialAccountType } from '../../../domain/entities/financial-account';
 import { FinancialAccountRepository } from '../../../domain/contracts/financial-account-repository';
 

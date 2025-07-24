@@ -58,10 +58,11 @@ export class UpdateTransactionUseCase {
       }
 
       // Reverter o efeito da transação atual no saldo da conta
-      if (currentTransaction.getContaFinanceiraId()) {
+      const currentAccountId = currentTransaction.getContaFinanceiraId();
+      if (currentAccountId) {
         const currentAccount = await this.financialAccountRepository.findByUserIdAndId(
           dto.userId,
-          currentTransaction.getContaFinanceiraId()
+          currentAccountId
         );
         if (currentAccount) {
           if (currentTransaction.isReceita()) {
@@ -97,10 +98,11 @@ export class UpdateTransactionUseCase {
       }
 
       // Validar nova conta financeira se fornecida
-      if (currentTransaction.getContaFinanceiraId()) {
+      const updatedAccountId = currentTransaction.getContaFinanceiraId();
+      if (updatedAccountId) {
         const account = await this.financialAccountRepository.findByUserIdAndId(
           dto.userId,
-          currentTransaction.getContaFinanceiraId()
+          updatedAccountId
         );
         if (!account) {
           throw new Error('Conta financeira não encontrada');
@@ -159,10 +161,11 @@ export class UpdateTransactionUseCase {
       const savedTransaction = await this.transactionRepository.update(currentTransaction);
 
       // Aplicar o novo efeito no saldo da conta
-      if (currentTransaction.getContaFinanceiraId()) {
+      const finalAccountId = currentTransaction.getContaFinanceiraId();
+      if (finalAccountId) {
         const account = await this.financialAccountRepository.findByUserIdAndId(
           dto.userId,
-          currentTransaction.getContaFinanceiraId()
+          finalAccountId
         );
         if (account) {
           if (currentTransaction.isReceita()) {

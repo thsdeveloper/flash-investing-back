@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { authMiddleware, AuthenticatedRequest } from '../../infrastructure/http/middlewares/auth-middleware';
+import { authMiddleware } from '../../infrastructure/http/middlewares/auth-middleware';
+import { AuthenticatedRequest } from '../../shared/types/authenticated-request';
 import { 
   createCreditCardTransactionSchema, 
   updateCreditCardTransactionSchema, 
@@ -43,7 +44,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         }
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const createUseCase = new CreateCreditCardTransactionUseCase(
           creditCardTransactionRepository,
@@ -54,7 +55,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         const result = await createUseCase.execute({
           ...body,
           dataCompra: new Date(body.dataCompra),
-          userId: request.user!.id,
+          userId: (request as AuthenticatedRequest).user.id,
         });
         
         return reply.status(201).send(result);
@@ -87,7 +88,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         }
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const getTransactionsUseCase = new GetCreditCardTransactionsUseCase(
           creditCardTransactionRepository
@@ -108,7 +109,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         );
         
         const result = await getTransactionsUseCase.execute(
-          request.user!.id,
+          (request as AuthenticatedRequest).user.id,
           Object.keys(cleanFilters).length > 0 ? cleanFilters : undefined
         );
         
@@ -139,14 +140,14 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         }
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const getTransactionByIdUseCase = new GetCreditCardTransactionByIdUseCase(
           creditCardTransactionRepository
         );
         
         const result = await getTransactionByIdUseCase.execute(
-          request.user!.id,
+          (request as AuthenticatedRequest).user.id,
           (request.params as any).id
         );
         
@@ -184,7 +185,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         }
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const updateUseCase = new UpdateCreditCardTransactionUseCase(
           creditCardTransactionRepository,
@@ -198,7 +199,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         };
         
         const result = await updateUseCase.execute(
-          request.user!.id,
+          (request as AuthenticatedRequest).user.id,
           (request.params as any).id,
           updateData
         );
@@ -235,14 +236,14 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         }
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const deleteUseCase = new DeleteCreditCardTransactionUseCase(
           creditCardTransactionRepository
         );
         
         await deleteUseCase.execute(
-          request.user!.id,
+          (request as AuthenticatedRequest).user.id,
           (request.params as any).id
         );
         
@@ -276,7 +277,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         }
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const getTransactionsUseCase = new GetCreditCardTransactionsUseCase(
           creditCardTransactionRepository
@@ -316,7 +317,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         }
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const getTransactionsUseCase = new GetCreditCardTransactionsUseCase(
           creditCardTransactionRepository

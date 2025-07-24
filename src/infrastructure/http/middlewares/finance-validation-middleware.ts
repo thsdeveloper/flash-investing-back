@@ -1,17 +1,10 @@
-import { FastifyRequest, FastifyReply } from 'fastify'
+import { FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastify'
 import { PrismaClient } from '@prisma/client'
 import { FinanceBusinessRules } from '../../../domain/services/finance-business-rules'
 import { UserFinanceSettings } from '../../../domain/entities/user-finance-settings'
 import { FinancialCategory } from '../../../domain/entities/financial-category'
 import { FinancialAccount } from '../../../domain/entities/financial-account'
-
-interface AuthenticatedRequest extends FastifyRequest {
-  user: {
-    id: string
-    name: string
-    email: string
-  }
-}
+import { AuthenticatedRequest } from '../../../shared/types/authenticated-request'
 
 export class FinanceValidationMiddleware {
   constructor(private prisma: PrismaClient) {}
@@ -19,8 +12,8 @@ export class FinanceValidationMiddleware {
   /**
    * Middleware para validar criação de categorias
    */
-  validateCategoryCreation = async (
-    request: AuthenticatedRequest,
+  validateCategoryCreation: preHandlerHookHandler = async (
+    request: FastifyRequest,
     reply: FastifyReply
   ) => {
     try {
@@ -28,14 +21,14 @@ export class FinanceValidationMiddleware {
       
       // Buscar configurações de orçamento do usuário
       const userFinanceSettingsData = await this.prisma.userFinanceSettings.findFirst({
-        where: { userId: request.user.id }
+        where: { userId: (request as AuthenticatedRequest).user.id }
       })
 
       let userFinanceSettings: UserFinanceSettings | null = null
       if (userFinanceSettingsData) {
         userFinanceSettings = UserFinanceSettings.create({
           id: userFinanceSettingsData.id,
-          salary: userFinanceSettingsData.salary,
+          salary: Number(userFinanceSettingsData.salary),
           fixed: userFinanceSettingsData.fixed,
           variable: userFinanceSettingsData.variable,
           investments: userFinanceSettingsData.investments,
@@ -59,8 +52,8 @@ export class FinanceValidationMiddleware {
   /**
    * Middleware para validar criação de transações
    */
-  validateTransactionCreation = async (
-    request: AuthenticatedRequest,
+  validateTransactionCreation: preHandlerHookHandler = async (
+    request: FastifyRequest,
     reply: FastifyReply
   ) => {
     try {
@@ -92,7 +85,7 @@ export class FinanceValidationMiddleware {
         const accountData = await this.prisma.financialAccount.findFirst({
           where: { 
             id: contaFinanceiraId,
-            userId: request.user.id 
+            userId: (request as AuthenticatedRequest).user.id 
           }
         })
 
@@ -102,8 +95,8 @@ export class FinanceValidationMiddleware {
             nome: accountData.nome,
             tipo: accountData.tipo as any,
             instituicao: accountData.instituicao || undefined,
-            saldoInicial: accountData.saldoInicial,
-            saldoAtual: accountData.saldoAtual,
+            saldoInicial: Number(accountData.saldoInicial),
+            saldoAtual: Number(accountData.saldoAtual),
             cor: accountData.cor || undefined,
             icone: accountData.icone || undefined,
             ativa: accountData.ativa,
@@ -117,30 +110,29 @@ export class FinanceValidationMiddleware {
 
       // Buscar categoria
       let categoryEntity: FinancialCategory | null = null
+      let categoryData: any = null // Move to broader scope
       const categoryIdentifier = categoriaId || categoria  // Priorizar categoriaId
       
       if (categoryIdentifier) {
-        console.log(`🔍 [validateTransactionCreation] Buscando categoria: "${categoryIdentifier}" para user: ${request.user.id}`)
         console.log(`🔍 [validateTransactionCreation] Usando: ${categoriaId ? 'categoriaId (FK)' : 'categoria (nome)'}`)
         console.log(`🔍 [validateTransactionCreation] Tipo: ${typeof categoryIdentifier}`)
         console.log(`🔍 [validateTransactionCreation] É UUID?: ${categoryIdentifier.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) !== null}`)
         
         // Buscar categoria
-        let categoryData
         if (categoriaId) {
           // Se foi fornecido categoriaId, buscar diretamente por ID
           categoryData = await this.prisma.financialCategory.findUnique({
             where: { id: categoriaId }
           })
           // Verificar se pertence ao usuário
-          if (categoryData && categoryData.userId !== request.user.id) {
+          if (categoryData && categoryData.userId !== (request as AuthenticatedRequest).user.id) {
             categoryData = null
           }
         } else {
           // Se foi fornecido categoria (nome), buscar por nome ou ID (compatibilidade)
           categoryData = await this.prisma.financialCategory.findFirst({
             where: { 
-              userId: request.user.id,
+              userId: (request as AuthenticatedRequest).user.id,
               OR: [
                 { id: categoria },      // Buscar por ID se for UUID
                 { nome: categoria }     // Buscar por nome se for string
@@ -154,7 +146,7 @@ export class FinanceValidationMiddleware {
         // Debug adicional se não encontrar
         if (!categoryData) {
           const totalCategories = await this.prisma.financialCategory.count({
-            where: { userId: request.user.id }
+            where: { userId: (request as AuthenticatedRequest).user.id }
           })
           console.log(`[DEBUG] Total de categorias do usuário: ${totalCategories}`)
         }
@@ -176,7 +168,7 @@ export class FinanceValidationMiddleware {
             tipo: categoryData.tipo as 'receita' | 'despesa',
             ativa: categoryData.ativa,
             ruleCategory: categoryData.ruleCategory as any,
-            sort: categoryData.sort,
+            sort: categoryData.sort ? Number(categoryData.sort) : 0,
             status: categoryData.status as any,
             userId: categoryData.userId,
             createdAt: categoryData.createdAt,
@@ -200,13 +192,13 @@ export class FinanceValidationMiddleware {
       if (tipo === 'despesa' && categoryEntity && categoryEntity.getRuleCategory()) {
         console.log('💰 [DEBUG] Iniciando validação de orçamento...')
         const userFinanceSettingsData = await this.prisma.userFinanceSettings.findFirst({
-          where: { userId: request.user.id }
+          where: { userId: (request as AuthenticatedRequest).user.id }
         })
 
         if (userFinanceSettingsData) {
           const userFinanceSettings = UserFinanceSettings.create({
             id: userFinanceSettingsData.id,
-            salary: userFinanceSettingsData.salary,
+            salary: Number(userFinanceSettingsData.salary),
             fixed: userFinanceSettingsData.fixed,
             variable: userFinanceSettingsData.variable,
             investments: userFinanceSettingsData.investments,
@@ -224,9 +216,9 @@ export class FinanceValidationMiddleware {
           let currentSpentQuery
           if (categoriaId) {
             currentSpentQuery = {
-              userId: request.user.id,
+              userId: (request as AuthenticatedRequest).user.id,
               categoriaId: categoriaId,
-              tipo: 'despesa',
+              tipo: 'despesa' as const,
               data: {
                 gte: startOfMonth,
                 lte: endOfMonth
@@ -234,12 +226,12 @@ export class FinanceValidationMiddleware {
             }
           } else {
             currentSpentQuery = {
-              userId: request.user.id,
+              userId: (request as AuthenticatedRequest).user.id,
               OR: [
                 { categoria: categoria },
                 { categoriaId: categoryData?.id }
               ].filter(Boolean),
-              tipo: 'despesa',
+              tipo: 'despesa' as const,
               data: {
                 gte: startOfMonth,
                 lte: endOfMonth
@@ -254,7 +246,7 @@ export class FinanceValidationMiddleware {
             }
           })
 
-          const currentSpentValue = currentSpent._sum.valor ? currentSpent._sum.valor.toNumber() : 0
+          const currentSpentValue = currentSpent._sum?.valor ? Number(currentSpent._sum.valor) : 0
           const budgets = userFinanceSettings.calculateBudgets()
           
           console.log('💰 [DEBUG] Validação de orçamento:', {
@@ -303,13 +295,13 @@ export class FinanceValidationMiddleware {
   /**
    * Middleware para validar se usuário tem orçamento configurado
    */
-  validateBudgetRequired = async (
-    request: AuthenticatedRequest,
+  validateBudgetRequired: preHandlerHookHandler = async (
+    request: FastifyRequest,
     reply: FastifyReply
   ) => {
     try {
       const userFinanceSettings = await this.prisma.userFinanceSettings.findFirst({
-        where: { userId: request.user.id }
+        where: { userId: (request as AuthenticatedRequest).user.id }
       })
 
       if (!userFinanceSettings) {
@@ -330,15 +322,15 @@ export class FinanceValidationMiddleware {
   /**
    * Middleware para validar se usuário tem pelo menos uma conta
    */
-  validateAccountRequired = async (
-    request: AuthenticatedRequest,
+  validateAccountRequired: preHandlerHookHandler = async (
+    request: FastifyRequest,
     reply: FastifyReply
   ) => {
     try {
       // Verificar contas ativas
       const activeAccountCount = await this.prisma.financialAccount.count({
         where: { 
-          userId: request.user.id,
+          userId: (request as AuthenticatedRequest).user.id,
           ativa: true
         }
       })
@@ -346,11 +338,11 @@ export class FinanceValidationMiddleware {
       // Debug: verificar todas as contas (ativas e inativas)
       const totalAccountCount = await this.prisma.financialAccount.count({
         where: { 
-          userId: request.user.id
+          userId: (request as AuthenticatedRequest).user.id
         }
       })
 
-      console.log(`[DEBUG] User ID: ${request.user.id}`)
+      console.log(`[DEBUG] User ID: ${(request as AuthenticatedRequest).user.id}`)
       console.log(`[DEBUG] Total accounts: ${totalAccountCount}`)
       console.log(`[DEBUG] Active accounts: ${activeAccountCount}`)
 
@@ -379,8 +371,8 @@ export class FinanceValidationMiddleware {
   /**
    * Middleware para validar exclusão de categoria
    */
-  validateCategoryDeletion = async (
-    request: AuthenticatedRequest,
+  validateCategoryDeletion: preHandlerHookHandler = async (
+    request: FastifyRequest,
     reply: FastifyReply
   ) => {
     try {
@@ -391,7 +383,7 @@ export class FinanceValidationMiddleware {
       const categoryData = await this.prisma.financialCategory.findFirst({
         where: { 
           id,
-          userId: request.user.id 
+          userId: (request as AuthenticatedRequest).user.id 
         }
       })
 
@@ -415,7 +407,7 @@ export class FinanceValidationMiddleware {
         tipo: categoryData.tipo as 'receita' | 'despesa',
         ativa: categoryData.ativa,
         ruleCategory: categoryData.ruleCategory as any,
-        sort: categoryData.sort,
+        sort: categoryData.sort ? Number(categoryData.sort) : 0,
         status: categoryData.status as any,
         userId: categoryData.userId,
         createdAt: categoryData.createdAt,
@@ -426,7 +418,7 @@ export class FinanceValidationMiddleware {
       const transactionCount = await this.prisma.transaction.count({
         where: { 
           categoriaId: categoryData.id,
-          userId: request.user.id 
+          userId: (request as AuthenticatedRequest).user.id 
         }
       })
       
@@ -434,7 +426,7 @@ export class FinanceValidationMiddleware {
       const transactionCountByName = await this.prisma.transaction.count({
         where: { 
           categoria: categoryData.nome,
-          userId: request.user.id 
+          userId: (request as AuthenticatedRequest).user.id 
         }
       })
       
@@ -449,14 +441,14 @@ export class FinanceValidationMiddleware {
       const creditCardTransactionCount = await this.prisma.creditCardTransaction.count({
         where: { 
           categoriaId: categoryData.id,
-          userId: request.user.id 
+          userId: (request as AuthenticatedRequest).user.id 
         }
       })
       
       const creditCardTransactionCountByName = await this.prisma.creditCardTransaction.count({
         where: { 
           categoria: categoryData.nome,
-          userId: request.user.id 
+          userId: (request as AuthenticatedRequest).user.id 
         }
       })
       
@@ -486,8 +478,8 @@ export class FinanceValidationMiddleware {
   /**
    * Middleware para validar exclusão de conta
    */
-  validateAccountDeletion = async (
-    request: AuthenticatedRequest,
+  validateAccountDeletion: preHandlerHookHandler = async (
+    request: FastifyRequest,
     reply: FastifyReply
   ) => {
     try {
@@ -497,7 +489,7 @@ export class FinanceValidationMiddleware {
       const accountData = await this.prisma.financialAccount.findFirst({
         where: { 
           id,
-          userId: request.user.id 
+          userId: (request as AuthenticatedRequest).user.id 
         }
       })
 
@@ -510,8 +502,8 @@ export class FinanceValidationMiddleware {
         nome: accountData.nome,
         tipo: accountData.tipo as any,
         instituicao: accountData.instituicao || undefined,
-        saldoInicial: accountData.saldoInicial,
-        saldoAtual: accountData.saldoAtual,
+        saldoInicial: Number(accountData.saldoInicial),
+        saldoAtual: Number(accountData.saldoAtual),
         cor: accountData.cor || undefined,
         icone: accountData.icone || undefined,
         ativa: accountData.ativa,
@@ -525,15 +517,15 @@ export class FinanceValidationMiddleware {
       const transactionCount = await this.prisma.transaction.count({
         where: { 
           contaFinanceiraId: id,
-          userId: request.user.id 
+          userId: (request as AuthenticatedRequest).user.id 
         }
       })
 
       // Verificar se tem cartões associados
       const creditCardCount = await this.prisma.creditCard.count({
         where: { 
-          contaId: id,
-          userId: request.user.id 
+          contaFinanceiraId: id,
+          userId: (request as AuthenticatedRequest).user.id 
         }
       })
 

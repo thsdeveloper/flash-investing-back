@@ -1,18 +1,11 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastify';
 import { JwtProviderImpl } from '../../providers/jwt-provider';
+import { AuthenticatedRequest } from '../../../shared/types/authenticated-request';
 
-export interface AuthenticatedRequest extends FastifyRequest {
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
-
-export async function authMiddleware(
-  request: AuthenticatedRequest,
+export const authMiddleware: preHandlerHookHandler = async (
+  request: FastifyRequest,
   reply: FastifyReply
-) {
+): Promise<void> => {
   try {
     const authHeader = request.headers.authorization;
     
@@ -33,7 +26,7 @@ export async function authMiddleware(
     const jwtProvider = new JwtProviderImpl();
     const payload = jwtProvider.verifyAccessToken(token);
 
-    request.user = {
+    (request as AuthenticatedRequest).user = {
       id: payload.sub,
       name: payload.name,
       email: payload.email,
@@ -43,4 +36,4 @@ export async function authMiddleware(
       error: 'Invalid or expired token',
     });
   }
-}
+};

@@ -56,11 +56,11 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
       financeValidation.validateBudgetRequired,
       financeValidation.validateCategoryCreation
     ],
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const result = await createUseCase.execute({
           ...request.body,
-          userId: request.user.id
+          userId: (request as any).user.id
         })
         return reply.status(201).send(result)
       } catch (error) {
@@ -85,10 +85,10 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
       }
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       const result = await listUseCase.execute({
         ...request.query,
-        userId: request.user.id
+        userId: (request as any).user.id
       })
       return reply.send(result)
     }
@@ -106,8 +106,8 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
       }
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
-      const result = await statsUseCase.execute(request.user.id)
+    handler: async (request, reply) => {
+      const result = await statsUseCase.execute((request as any).user.id)
       return reply.send(result)
     }
   })
@@ -127,9 +127,9 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
       }
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        await reorderUseCase.execute(request.body, request.user.id)
+        await reorderUseCase.execute(request.body, (request as any).user.id)
         return reply.status(204).send()
       } catch (error) {
         if (error instanceof Error) {
@@ -161,9 +161,9 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
       }
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const result = await getUseCase.execute(request.params.id, request.user.id)
+        const result = await getUseCase.execute((request.params as any).id, (request as any).user.id)
         
         if (!result) {
           return reply.status(404).send({ error: 'Category not found' })
@@ -198,11 +198,11 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
       }
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const result = await updateUseCase.execute(
-          request.params.id,
-          request.user.id,
+          (request.params as any).id,
+          (request as any).user.id,
           request.body
         )
         return reply.send(result)
@@ -240,7 +240,7 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
       authMiddleware,
       financeValidation.validateCategoryDeletion
     ],
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       // Verificação de segurança: se a resposta já foi enviada, não continuar
       if (reply.sent) {
         console.log('⚠️ [DELETE Handler] Resposta já foi enviada, ignorando handler')
@@ -249,7 +249,7 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
       
       console.log('🎯 [DELETE Handler] Iniciando exclusão da categoria:', request.params.id)
       try {
-        await deleteUseCase.execute(request.params.id, request.user.id)
+        await deleteUseCase.execute((request as any).params.id, (request as any).user.id)
         console.log('✅ [DELETE Handler] Categoria excluída com sucesso')
         return reply.status(204).send()
       } catch (error) {

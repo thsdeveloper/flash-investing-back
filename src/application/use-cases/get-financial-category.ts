@@ -31,8 +31,8 @@ export class GetFinancialCategoryUseCase {
       sort: category.sort,
       status: category.status,
       userId: category.userId,
-      createdAt: category.createdAt,
-      updatedAt: category.updatedAt
+      createdAt: category.createdAt instanceof Date ? category.createdAt.toISOString() : category.createdAt,
+      updatedAt: category.updatedAt instanceof Date ? category.updatedAt.toISOString() : category.updatedAt
     }
   }
 }

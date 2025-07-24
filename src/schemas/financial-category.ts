@@ -51,17 +51,17 @@ export const listFinancialCategoriesQuerySchema = z.object({
 export const financialCategoryResponseSchema = z.object({
   id: z.string().uuid(),
   nome: z.string(),
-  descricao: z.string().nullable(),
-  icone: z.string().nullable(),
-  cor: z.string().nullable(),
+  descricao: z.string().nullable().optional(),
+  icone: z.string().nullable().optional(),
+  cor: z.string().nullable().optional(),
   tipo: categoryTypeSchema,
   ativa: z.boolean(),
-  ruleCategory: categoryRuleSchema,
+  ruleCategory: categoryRuleSchema.optional(),
   sort: z.number(),
   status: categoryStatusSchema,
   userId: z.string().uuid(),
-  createdAt: z.date(),
-  updatedAt: z.date()
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime()
 })
 
 export const financialCategoryStatsResponseSchema = z.object({

@@ -22,7 +22,7 @@ export const updateUserFinanceSettingsBodySchema = z.object({
       if (!hasAllPercentages) {
         return false
       }
-      return data.fixed + data.variable + data.investments === 100
+      return data.fixed! + data.variable! + data.investments! === 100
     }
     return true
   },

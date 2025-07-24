@@ -9,7 +9,7 @@ import { DeleteFinancialAccountUseCase } from '../../application/use-cases/delet
 import { PrismaFinancialAccountRepository } from '../../infrastructure/database/repositories/prisma-financial-account-repository';
 import { DomainError } from '../../domain/errors/domain-error';
 import { authMiddleware } from '../../infrastructure/http/middlewares/auth-middleware';
-import { AuthenticatedRequest } from '../../infrastructure/http/middlewares/auth-middleware';
+import { AuthenticatedRequestWithTypes } from '../../shared/types/authenticated-request';
 import { prisma } from '../../infrastructure/database/prisma-client';
 
 const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
@@ -28,13 +28,13 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
             id: z.string().uuid().describe('ID único da conta financeira'),
             nome: z.string().describe('Nome da conta financeira'),
             tipo: z.enum(['conta_corrente', 'conta_poupanca', 'carteira', 'investimento', 'outras']).describe('Tipo da conta financeira'),
-            instituicao: z.string().nullable().describe('Instituição financeira'),
+            instituicao: z.string().nullable().optional().describe('Instituição financeira'),
             saldo_inicial: z.number().describe('Saldo inicial da conta'),
             saldo_atual: z.number().describe('Saldo atual da conta'),
-            cor: z.string().nullable().describe('Cor da conta em hexadecimal'),
-            icone: z.string().nullable().describe('Ícone da conta'),
+            cor: z.string().nullable().optional().describe('Cor da conta em hexadecimal'),
+            icone: z.string().nullable().optional().describe('Ícone da conta'),
             ativa: z.boolean().describe('Se a conta está ativa'),
-            observacoes: z.string().nullable().describe('Observações sobre a conta'),
+            observacoes: z.string().nullable().optional().describe('Observações sobre a conta'),
             user: z.string().uuid().describe('ID do usuário proprietário'),
             date_created: z.string().datetime().describe('Data de criação'),
             date_updated: z.string().datetime().describe('Data de atualização')
@@ -50,11 +50,11 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
       }
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const getAccountsUseCase = new GetFinancialAccountsUseCase(financialAccountRepository);
         const result = await getAccountsUseCase.execute({
-          userId: request.user!.id,
+          userId: (request as any).user.id,
           // Sem filtros - retorna todas as contas do usuário
         });
         
@@ -103,10 +103,10 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
       },
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const getAccountUseCase = new GetFinancialAccountByIdUseCase(financialAccountRepository);
-        const result = await getAccountUseCase.execute((request.params as any).id, request.user!.id);
+        const result = await getAccountUseCase.execute((request.params as any).id, (request as any).user.id);
         
         return result;
       } catch (error) {
@@ -160,7 +160,7 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
       },
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const body = request.body as any;
         const createAccountUseCase = new CreateFinancialAccountUseCase(financialAccountRepository);
@@ -168,11 +168,11 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           nome: body.nome,
           tipo: body.tipo,
           instituicao: body.instituicao,
-          saldoInicial: typeof body.saldo_inicial === 'string' ? parseFloat(body.saldo_inicial) : body.saldo_inicial,
+          saldoInicial: typeof body.saldo_inicial === 'string' ? parseFloat(body.saldo_inicial) : body.saldo_inicial || 0,
           cor: body.cor,
           icone: body.icone,
           observacoes: body.observacoes,
-          userId: request.user!.id,
+          userId: (request as any).user.id,
         });
         
         return reply.status(201).send(result);
@@ -234,7 +234,7 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
       },
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const body = request.body as any;
         const updateAccountUseCase = new UpdateFinancialAccountUseCase(financialAccountRepository);
@@ -251,7 +251,7 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
             ativa: body.ativa,
             observacoes: body.observacoes,
           },
-          request.user!.id
+          (request as any).user.id
         );
         
         return result;
@@ -289,13 +289,13 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
       },
     },
     preHandler: authMiddleware,
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const query = request.query as any;
         const deleteAccountUseCase = new DeleteFinancialAccountUseCase(financialAccountRepository);
         await deleteAccountUseCase.execute(
           (request.params as any).id,
-          request.user!.id,
+          (request as any).user.id,
           query.hard !== 'true' // Se hard=true, softDelete=false
         );
         
