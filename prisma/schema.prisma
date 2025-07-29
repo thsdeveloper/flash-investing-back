@@ -23,6 +23,9 @@ model User {
   creditCardTransactions CreditCardTransaction[]
   financeSettings UserFinanceSettings?
   financialCategories FinancialCategory[]
+  debts Debt[]
+  debtPayments DebtPayment[]
+  debtNegotiations DebtNegotiation[]
 
   @@map("users")
 }
@@ -285,4 +288,96 @@ enum CategoryStatus {
   archived
 
   @@map("category_status")
+}
+
+model Debt {
+  id              String      @id @default(uuid())
+  credor          String
+  tipoDiv         DebtType    @map("tipo_divida")
+  valorOriginal   Decimal     @map("valor_original")
+  valorAtual      Decimal     @map("valor_atual")
+  taxaJuros       Decimal?    @map("taxa_juros")
+  dataVencimento  DateTime    @map("data_vencimento")
+  status          DebtStatus  @default(ativa)
+  descricao       String?
+  parcelasTotal   Int?        @map("parcelas_total")
+  valorParcela    Decimal?    @map("valor_parcela")
+  userId          String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments     DebtPayment[]
+  negotiations DebtNegotiation[]
+
+  @@map("debts")
+}
+
+model DebtPayment {
+  id             String            @id @default(uuid())
+  debtId         String            @map("debt_id")
+  valor          Decimal
+  dataPagamento  DateTime          @map("data_pagamento")
+  tipo           DebtPaymentType
+  observacoes    String?
+  userId         String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  debt Debt @relation(fields: [debtId], references: [id], onDelete: Cascade)
+
+  @@map("debt_payments")
+}
+
+model DebtNegotiation {
+  id               String                 @id @default(uuid())
+  debtId           String                 @map("debt_id")
+  dataNegociacao   DateTime               @map("data_negociacao")
+  proposta         String
+  status           DebtNegotiationStatus
+  observacoes      String?
+  userId           String
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  debt Debt @relation(fields: [debtId], references: [id], onDelete: Cascade)
+
+  @@map("debt_negotiations")
+}
+
+enum DebtType {
+  cartao_credito
+  emprestimo_pessoal
+  financiamento
+  cheque_especial
+  outros
+
+  @@map("debt_types")
+}
+
+enum DebtStatus {
+  ativa
+  quitada
+  em_negociacao
+  vencida
+
+  @@map("debt_status")
+}
+
+enum DebtPaymentType {
+  pagamento_parcial
+  quitacao_total
+
+  @@map("debt_payment_types")
+}
+
+enum DebtNegotiationStatus {
+  pendente
+  aceita
+  rejeitada
+  em_andamento
+
+  @@map("debt_negotiation_status")
 }

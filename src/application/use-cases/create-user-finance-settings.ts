@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { UserFinanceSettings } from '../../domain/entities/user-finance-settings'
 import { UserFinanceSettingsRepository } from '../../domain/contracts/user-finance-settings-repository'
 import { CreateUserFinanceSettingsDto, UserFinanceSettingsResponseDto } from '../dtos/user-finance-settings-dtos'
@@ -13,7 +14,7 @@ export class CreateUserFinanceSettingsUseCase {
     }
 
     const settings = UserFinanceSettings.create({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       salary: dto.salary,
       fixed: dto.fixed,
       variable: dto.variable,

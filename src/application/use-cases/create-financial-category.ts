@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { FinancialCategory } from '../../domain/entities/financial-category'
 import { FinancialCategoryRepository } from '../../domain/contracts/financial-category-repository'
 import { CreateFinancialCategoryDto, FinancialCategoryResponseDto } from '../dtos/financial-category-dtos'
@@ -18,7 +19,7 @@ export class CreateFinancialCategoryUseCase {
     const nextSort = await this.getNextSortValue(dto.userId, dto.tipo)
 
     const category = FinancialCategory.create({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       nome: dto.nome.trim(),
       descricao: dto.descricao,
       icone: dto.icone,

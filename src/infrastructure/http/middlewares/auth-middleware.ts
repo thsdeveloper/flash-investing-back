@@ -11,7 +11,14 @@ export const authMiddleware: preHandlerHookHandler = async (
     
     if (!authHeader) {
       return reply.status(401).send({
-        error: 'Missing authorization header',
+        success: false,
+        data: null,
+        message: 'Missing authorization header',
+        errors: ['MISSING_AUTHORIZATION_HEADER'],
+        meta: {
+          timestamp: new Date().toISOString(),
+          version: '1.0.0'
+        }
       });
     }
 
@@ -19,7 +26,14 @@ export const authMiddleware: preHandlerHookHandler = async (
     
     if (bearer !== 'Bearer' || !token) {
       return reply.status(401).send({
-        error: 'Invalid authorization format',
+        success: false,
+        data: null,
+        message: 'Invalid authorization format',
+        errors: ['INVALID_AUTHORIZATION_FORMAT'],
+        meta: {
+          timestamp: new Date().toISOString(),
+          version: '1.0.0'
+        }
       });
     }
 
@@ -33,7 +47,14 @@ export const authMiddleware: preHandlerHookHandler = async (
     };
   } catch (error) {
     return reply.status(401).send({
-      error: 'Invalid or expired token',
+      success: false,
+      data: null,
+      message: 'Invalid or expired token',
+      errors: ['INVALID_OR_EXPIRED_TOKEN'],
+      meta: {
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
+      }
     });
   }
 };
