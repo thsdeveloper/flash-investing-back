@@ -14,6 +14,7 @@ export interface CreateTransactionDto {
   categoriaId?: string;      // Nova FK para FinancialCategory
   subcategoria?: string;
   data: Date;
+  status?: 'pending' | 'completed';
   observacoes?: string;
   contaFinanceiraId?: string;
   userId: string;
@@ -28,6 +29,7 @@ export interface TransactionResponseDto {
   categoriaId?: string;      // Nova FK para FinancialCategory
   subcategoria?: string;
   data: string;
+  status: 'pending' | 'completed';
   observacoes?: string;
   contaFinanceiraId?: string;
   userId: string;
@@ -56,6 +58,7 @@ export class CreateTransactionUseCase {
         categoriaId: dto.categoriaId,
         subcategoria: dto.subcategoria,
         data: dto.data,
+        status: dto.status || 'pending',
         observacoes: dto.observacoes,
         contaFinanceiraId: dto.contaFinanceiraId,
         userId: dto.userId
@@ -118,8 +121,8 @@ export class CreateTransactionUseCase {
       // Criar a transação
       const savedTransaction = await this.transactionRepository.create(transaction);
 
-      // Atualizar saldo da conta se necessário
-      if (dto.contaFinanceiraId) {
+      // Atualizar saldo da conta apenas se transação estiver completed
+      if (dto.contaFinanceiraId && transaction.isCompleted()) {
         const account = await this.financialAccountRepository.findByUserIdAndId(dto.userId, dto.contaFinanceiraId);
         if (account) {
           if (transaction.isReceita()) {
@@ -150,6 +153,7 @@ export class CreateTransactionUseCase {
       categoriaId: transaction.getCategoriaId(),
       subcategoria: transaction.getSubcategoria(),
       data: transaction.getData().toISOString(),
+      status: transaction.getStatus(),
       observacoes: transaction.getObservacoes(),
       contaFinanceiraId: transaction.getContaFinanceiraId(),
       userId: transaction.getUserId(),

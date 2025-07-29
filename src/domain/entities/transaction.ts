@@ -1,4 +1,5 @@
 export type TransactionType = 'receita' | 'despesa' | 'transferencia';
+export type TransactionStatus = 'pending' | 'completed';
 
 export interface TransactionProps {
   id?: string;
@@ -9,6 +10,7 @@ export interface TransactionProps {
   categoriaId?: string;  // Nova FK para FinancialCategory
   subcategoria?: string;
   data: Date;
+  status?: TransactionStatus;
   observacoes?: string;
   contaFinanceiraId?: string;
   userId: string;
@@ -25,6 +27,7 @@ export class Transaction {
   private categoriaId?: string;  // Nova FK para FinancialCategory
   private subcategoria?: string;
   private data: Date;
+  private status: TransactionStatus;
   private observacoes?: string;
   private contaFinanceiraId?: string;
   private readonly userId: string;
@@ -40,6 +43,7 @@ export class Transaction {
     this.categoriaId = props.categoriaId;
     this.subcategoria = props.subcategoria;
     this.data = props.data;
+    this.status = props.status || 'pending';
     this.observacoes = props.observacoes;
     this.contaFinanceiraId = props.contaFinanceiraId;
     this.userId = props.userId;
@@ -119,6 +123,10 @@ export class Transaction {
     return this.updatedAt;
   }
 
+  getStatus(): TransactionStatus {
+    return this.status;
+  }
+
   updateDescricao(descricao: string): void {
     if (!descricao || descricao.trim().length === 0) {
       throw new Error('Descrição da transação é obrigatória');
@@ -132,6 +140,14 @@ export class Transaction {
       throw new Error('Valor da transação deve ser maior que zero');
     }
     this.valor = valor;
+    this.updatedAt = new Date();
+  }
+
+  updateTipo(tipo: TransactionType): void {
+    if (!['receita', 'despesa', 'transferencia'].includes(tipo)) {
+      throw new Error('Tipo de transação inválido. Deve ser "receita", "despesa" ou "transferencia"');
+    }
+    this.tipo = tipo;
     this.updatedAt = new Date();
   }
 
@@ -168,6 +184,19 @@ export class Transaction {
     this.updatedAt = new Date();
   }
 
+  updateStatus(status: TransactionStatus): void {
+    this.status = status;
+    this.updatedAt = new Date();
+  }
+
+  markAsCompleted(): void {
+    this.updateStatus('completed');
+  }
+
+  markAsPending(): void {
+    this.updateStatus('pending');
+  }
+
   isReceita(): boolean {
     return this.tipo === 'receita';
   }
@@ -178,6 +207,14 @@ export class Transaction {
 
   isTransferencia(): boolean {
     return this.tipo === 'transferencia';
+  }
+
+  isPending(): boolean {
+    return this.status === 'pending';
+  }
+
+  isCompleted(): boolean {
+    return this.status === 'completed';
   }
 
   belongsToUser(userId: string): boolean {

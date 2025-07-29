@@ -1,7 +1,9 @@
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
+import { z } from 'zod';
 import { authMiddleware } from '../../infrastructure/http/middlewares/auth-middleware';
 import { AuthenticatedRequest } from '../../shared/types/authenticated-request';
+import { errorResponseSchema, idParamsSchema } from '../../schemas/common';
 import { 
   createCreditCardTransactionSchema, 
   updateCreditCardTransactionSchema, 
@@ -36,12 +38,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
       body: createCreditCardTransactionSchema,
       response: {
         201: creditCardTransactionResponseSchema,
-        400: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' }
-          }
-        }
+        400: errorResponseSchema
       }
     },
     handler: async (request, reply) => {
@@ -80,12 +77,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
       querystring: creditCardTransactionFiltersSchema,
       response: {
         200: creditCardTransactionListSchema,
-        401: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' }
-          }
-        }
+        401: errorResponseSchema
       }
     },
     handler: async (request, reply) => {
@@ -132,12 +124,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
       params: transactionIdParamsSchema,
       response: {
         200: creditCardTransactionResponseSchema,
-        404: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' }
-          }
-        }
+        404: errorResponseSchema
       }
     },
     handler: async (request, reply) => {
@@ -171,18 +158,8 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
       body: updateCreditCardTransactionSchema,
       response: {
         200: creditCardTransactionResponseSchema,
-        400: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' }
-          }
-        },
-        404: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' }
-          }
-        }
+        400: errorResponseSchema,
+        404: errorResponseSchema
       }
     },
     handler: async (request, reply) => {
@@ -225,15 +202,8 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
       security: [{ bearerAuth: [] }],
       params: transactionIdParamsSchema,
       response: {
-        204: {
-          type: 'null'
-        },
-        404: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' }
-          }
-        }
+        204: z.null(),
+        404: errorResponseSchema
       }
     },
     handler: async (request, reply) => {
@@ -263,18 +233,12 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
       description: 'Buscar transações por cartão de crédito',
       tags: ['Credit Card Transactions'],
       security: [{ bearerAuth: [] }],
-      params: {
-        type: 'object',
-        properties: {
-          creditCardId: { type: 'string', format: 'uuid' }
-        },
-        required: ['creditCardId']
-      },
+      params: idParamsSchema.extend({
+        creditCardId: z.string().uuid()
+      }),
       response: {
-        200: {
-          type: 'array',
-          items: creditCardTransactionResponseSchema
-        }
+        200: z.array(creditCardTransactionResponseSchema),
+        500: errorResponseSchema
       }
     },
     handler: async (request, reply) => {
@@ -303,18 +267,12 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
       description: 'Buscar transações por fatura',
       tags: ['Credit Card Transactions'],
       security: [{ bearerAuth: [] }],
-      params: {
-        type: 'object',
-        properties: {
-          invoiceId: { type: 'string', format: 'uuid' }
-        },
-        required: ['invoiceId']
-      },
+      params: idParamsSchema.extend({
+        invoiceId: z.string().uuid()
+      }),
       response: {
-        200: {
-          type: 'array',
-          items: creditCardTransactionResponseSchema
-        }
+        200: z.array(creditCardTransactionResponseSchema),
+        500: errorResponseSchema
       }
     },
     handler: async (request, reply) => {

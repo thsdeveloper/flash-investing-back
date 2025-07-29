@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AuthenticatedRequest } from '../../shared/types/authenticated-request'
+import { errorResponseSchema } from '../../schemas/common'
 import { authMiddleware } from '../../infrastructure/http/middlewares/auth-middleware'
 import { prisma } from '../../infrastructure/database/prisma-client'
 import { PrismaUserFinanceSettingsRepository } from '../../infrastructure/database/repositories/prisma-user-finance-settings-repository'
@@ -33,9 +34,7 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
       body: createUserFinanceSettingsBodySchema,
       response: {
         201: userFinanceSettingsResponseSchema,
-        400: z.object({
-          error: z.string()
-        })
+        400: errorResponseSchema
       }
     },
     preHandler: authMiddleware,
@@ -63,9 +62,7 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
       tags: ['Finance Settings'],
       response: {
         200: getUserFinanceSettingsResponseSchema.nullable(),
-        404: z.object({
-          error: z.string()
-        })
+        404: errorResponseSchema
       }
     },
     preHandler: authMiddleware,
@@ -90,12 +87,8 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
       body: updateUserFinanceSettingsBodySchema,
       response: {
         200: userFinanceSettingsResponseSchema,
-        400: z.object({
-          error: z.string()
-        }),
-        404: z.object({
-          error: z.string()
-        })
+        400: errorResponseSchema,
+        404: errorResponseSchema
       }
     },
     preHandler: authMiddleware,
@@ -131,12 +124,8 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
       params: userFinanceSettingsParamsSchema,
       response: {
         204: z.null(),
-        404: z.object({
-          error: z.string()
-        }),
-        403: z.object({
-          error: z.string()
-        })
+        404: errorResponseSchema,
+        403: errorResponseSchema
       }
     },
     preHandler: authMiddleware,

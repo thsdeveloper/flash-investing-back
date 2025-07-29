@@ -3,9 +3,9 @@ import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { 
   registerUserSchema, 
   loginSchema, 
-  authResponseSchema, 
-  errorResponseSchema 
+  authResponseSchema
 } from '../../schemas/auth';
+import { errorResponseSchema } from '../../schemas/common';
 import { RegisterUserUseCase } from '../../application/use-cases/register-user';
 import { LoginUserUseCase } from '../../application/use-cases/login-user';
 import { PrismaUserRepository } from '../../infrastructure/database/repositories/prisma-user-repository';

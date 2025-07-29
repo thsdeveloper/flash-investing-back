@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const transactionTypeSchema = z.enum(['receita', 'despesa', 'transferencia']);
+export const transactionStatusSchema = z.enum(['pending', 'completed']);
 
 export const createTransactionSchema = z.object({
   descricao: z.string().min(1, 'Descrição é obrigatória').max(255, 'Descrição deve ter no máximo 255 caracteres'),
@@ -10,6 +11,7 @@ export const createTransactionSchema = z.object({
   categoriaId: z.string().uuid('ID da categoria deve ser um UUID válido').optional(),  // Nova FK
   subcategoria: z.string().optional(),
   data: z.coerce.date(),
+  status: transactionStatusSchema.optional().default('pending'),
   observacoes: z.string().optional().or(z.literal('')),
   contaFinanceiraId: z.string().uuid('ID da conta deve ser um UUID válido'),
 });
@@ -22,6 +24,7 @@ export const updateTransactionSchema = z.object({
   categoriaId: z.string().uuid('ID da categoria deve ser um UUID válido').optional(),  // Nova FK
   subcategoria: z.string().optional(),
   data: z.coerce.date().optional(),
+  status: transactionStatusSchema.optional(),
   observacoes: z.string().optional(),
   contaFinanceiraId: z.string().uuid('ID da conta deve ser um UUID válido').optional(),
 });
@@ -49,6 +52,7 @@ export const transactionResponseSchema = z.object({
   categoriaId: z.string().uuid().optional(),  // Nova FK
   subcategoria: z.string().optional(),
   data: z.string(),
+  status: transactionStatusSchema,
   observacoes: z.string().optional(),
   contaFinanceiraId: z.string().uuid().optional(),
   userId: z.string().uuid(),
@@ -133,4 +137,21 @@ export const budgetResponseSchema = z.object({
 export const budgetQuerySchema = z.object({
   startDate: z.coerce.date().optional(),
   endDate: z.coerce.date().optional(),
+});
+
+export const completeTransactionSchema = z.object({
+  id: z.string().uuid('ID deve ser um UUID válido'),
+});
+
+export const patchTransactionSchema = z.object({
+  descricao: z.string().min(1, 'Descrição é obrigatória').max(255, 'Descrição deve ter no máximo 255 caracteres').optional(),
+  valor: z.number().positive('Valor deve ser positivo').optional(),
+  tipo: transactionTypeSchema.optional(),
+  categoria: z.string().optional(),  // Mantido para compatibilidade
+  categoriaId: z.string().uuid('ID da categoria deve ser um UUID válido').optional(),  // Nova FK
+  subcategoria: z.string().optional(),
+  data: z.coerce.date().optional(),
+  status: transactionStatusSchema.optional(),
+  observacoes: z.string().optional(),
+  contaFinanceiraId: z.string().uuid('ID da conta deve ser um UUID válido').optional(),
 });

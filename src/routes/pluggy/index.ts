@@ -18,6 +18,7 @@ import {
   accountResponseSchema,
   transactionResponseSchema
 } from '../../schemas/pluggy';
+import { errorResponseSchema } from '../../schemas/common';
 
 const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
   // Inicializar dependências
@@ -41,7 +42,7 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
       }),
       response: {
         200: z.array(connectorResponseSchema),
-        500: z.object({ error: z.string() })
+        500: errorResponseSchema
       }
     },
     handler: async (request, reply) => {
@@ -251,7 +252,7 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
           executionStatus: z.string(),
           itemId: z.string()
         }),
-        500: z.object({ error: z.string() })
+        500: errorResponseSchema
       }
     },
     handler: async (request, reply) => {

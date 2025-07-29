@@ -6,12 +6,13 @@ import { UserFinanceSettingsRepository } from '../../domain/contracts/user-finan
 import { BudgetService } from '../../domain/services/budget-service';
 import { PrismaClient } from '@prisma/client';
 
-export interface UpdateTransactionDto {
+export interface PatchTransactionDto {
   id: string;
   descricao?: string;
   valor?: number;
   tipo?: 'receita' | 'despesa' | 'transferencia';
   categoria?: string;
+  categoriaId?: string;
   subcategoria?: string;
   data?: Date;
   status?: 'pending' | 'completed';
@@ -26,6 +27,7 @@ export interface TransactionResponseDto {
   valor: number;
   tipo: 'receita' | 'despesa' | 'transferencia';
   categoria?: string;
+  categoriaId?: string;
   subcategoria?: string;
   data: string;
   status: 'pending' | 'completed';
@@ -36,7 +38,7 @@ export interface TransactionResponseDto {
   updatedAt: string;
 }
 
-export class UpdateTransactionUseCase {
+export class PatchTransactionUseCase {
   constructor(
     private readonly transactionRepository: TransactionRepository,
     private readonly financialAccountRepository: FinancialAccountRepository,
@@ -45,8 +47,7 @@ export class UpdateTransactionUseCase {
     private readonly prisma: PrismaClient
   ) {}
 
-  async execute(dto: UpdateTransactionDto): Promise<TransactionResponseDto> {
-    // Usar transação do banco de dados para garantir consistência
+  async execute(dto: PatchTransactionDto): Promise<TransactionResponseDto> {
     return await this.prisma.$transaction(async (prismaTransaction) => {
       // Buscar a transação atual
       const currentTransaction = await this.transactionRepository.findById(dto.id);
@@ -59,32 +60,31 @@ export class UpdateTransactionUseCase {
         throw new Error('Transação não pertence ao usuário');
       }
 
-      // Reverter o efeito da transação atual no saldo da conta (apenas se estava completed)
-      const currentAccountId = currentTransaction.getContaFinanceiraId();
-      if (currentAccountId && currentTransaction.isCompleted()) {
-        const currentAccount = await this.financialAccountRepository.findByUserIdAndId(
-          dto.userId,
-          currentAccountId
-        );
-        if (currentAccount) {
-          if (currentTransaction.isReceita()) {
-            currentAccount.subtrairValor(currentTransaction.getValor());
-          } else if (currentTransaction.isDespesa()) {
-            currentAccount.adicionarValor(currentTransaction.getValor());
-          }
-          await this.financialAccountRepository.update(currentAccount);
-        }
-      }
+      // Capturar estado atual antes das mudanças
+      const oldStatus = currentTransaction.getStatus();
+      const oldValue = currentTransaction.getValor();
+      const oldType = currentTransaction.getTipo();
+      const oldAccountId = currentTransaction.getContaFinanceiraId();
 
-      // Aplicar as atualizações
+      // Aplicar mudanças nos campos fornecidos
       if (dto.descricao !== undefined) {
         currentTransaction.updateDescricao(dto.descricao);
       }
       if (dto.valor !== undefined) {
         currentTransaction.updateValor(dto.valor);
       }
+      if (dto.tipo !== undefined) {
+        // Tipo não pode ser mudado se transação estiver completed
+        if (currentTransaction.isCompleted() && dto.tipo !== oldType) {
+          throw new Error('Não é possível alterar o tipo de uma transação já efetuada');
+        }
+        currentTransaction.updateTipo(dto.tipo);
+      }
       if (dto.categoria !== undefined) {
         currentTransaction.updateCategoria(dto.categoria);
+      }
+      if (dto.categoriaId !== undefined) {
+        currentTransaction.updateCategoriaId(dto.categoriaId);
       }
       if (dto.subcategoria !== undefined) {
         currentTransaction.updateSubcategoria(dto.subcategoria);
@@ -102,39 +102,35 @@ export class UpdateTransactionUseCase {
         currentTransaction.updateStatus(dto.status);
       }
 
-      // Validar nova conta financeira se fornecida
-      const updatedAccountId = currentTransaction.getContaFinanceiraId();
-      if (updatedAccountId) {
+      // Capturar novo estado após mudanças
+      const newStatus = currentTransaction.getStatus();
+      const newValue = currentTransaction.getValor();
+      const newType = currentTransaction.getTipo();
+      const newAccountId = currentTransaction.getContaFinanceiraId();
+
+      // Validar nova conta financeira se mudou
+      if (dto.contaFinanceiraId !== undefined && newAccountId) {
         const account = await this.financialAccountRepository.findByUserIdAndId(
           dto.userId,
-          updatedAccountId
+          newAccountId
         );
         if (!account) {
           throw new Error('Conta financeira não encontrada');
         }
-
         if (!account.isAtiva()) {
           throw new Error('Conta financeira está inativa');
         }
-
-        // Validar saldo para despesas
-        if (currentTransaction.isDespesa()) {
-          const saldoAtual = account.getSaldoAtual();
-          if (saldoAtual < currentTransaction.getValor()) {
-            throw new Error(`Saldo insuficiente. Saldo atual: R$ ${saldoAtual.toFixed(2)}, Valor solicitado: R$ ${currentTransaction.getValor().toFixed(2)}`);
-          }
-        }
       }
 
-      // Validar orçamento para despesas com categoria
-      if (currentTransaction.isDespesa() && currentTransaction.getCategoria()) {
+      // Validar orçamento para despesas se categoria mudou
+      if ((dto.categoria !== undefined || dto.categoriaId !== undefined) && 
+          currentTransaction.isDespesa() && 
+          (currentTransaction.getCategoria() || currentTransaction.getCategoriaId())) {
+        
         const userSettings = await this.userFinanceSettingsRepository.findByUserId(dto.userId);
         
         if (BudgetService.hasValidBudgetSettings(userSettings)) {
-          // Buscar categorias do usuário
           const categories = await this.financialCategoryRepository.findByUser(dto.userId);
-          
-          // Buscar transações do mês atual (excluindo a atual)
           const { startDate, endDate } = BudgetService.getCurrentMonthPeriod();
           const monthTransactions = await this.transactionRepository.findByUserIdAndDateRange(
             dto.userId, 
@@ -142,13 +138,12 @@ export class UpdateTransactionUseCase {
             endDate
           );
 
-          // Filtrar a transação atual das transações do mês
           const filteredTransactions = monthTransactions.filter(t => t.getId() !== dto.id);
-
-          // Validar orçamento
+          const categoryIdentifier = currentTransaction.getCategoriaId() || currentTransaction.getCategoria();
+          
           const budgetValidation = BudgetService.validateTransactionBudget(
             currentTransaction.getValor(),
-            currentTransaction.getCategoria()!,
+            categoryIdentifier!,
             userSettings!,
             filteredTransactions,
             categories,
@@ -162,28 +157,122 @@ export class UpdateTransactionUseCase {
         }
       }
 
+      // Lógica inteligente de atualização de saldo baseada nas mudanças
+      await this.handleBalanceChanges(
+        dto.userId,
+        oldStatus,
+        newStatus,
+        oldValue,
+        newValue,
+        oldType,
+        newType,
+        oldAccountId,
+        newAccountId
+      );
+
       // Salvar a transação atualizada
       const savedTransaction = await this.transactionRepository.update(currentTransaction);
 
-      // Aplicar o novo efeito no saldo da conta (apenas se transação estiver completed)
-      const finalAccountId = currentTransaction.getContaFinanceiraId();
-      if (finalAccountId && currentTransaction.isCompleted()) {
-        const account = await this.financialAccountRepository.findByUserIdAndId(
-          dto.userId,
-          finalAccountId
-        );
-        if (account) {
-          if (currentTransaction.isReceita()) {
-            account.adicionarValor(currentTransaction.getValor());
-          } else if (currentTransaction.isDespesa()) {
-            account.subtrairValor(currentTransaction.getValor());
-          }
-          await this.financialAccountRepository.update(account);
-        }
-      }
-
       return this.toResponseDto(savedTransaction);
     });
+  }
+
+  private async handleBalanceChanges(
+    userId: string,
+    oldStatus: 'pending' | 'completed',
+    newStatus: 'pending' | 'completed',
+    oldValue: number,
+    newValue: number,
+    oldType: 'receita' | 'despesa' | 'transferencia',
+    newType: 'receita' | 'despesa' | 'transferencia',
+    oldAccountId?: string,
+    newAccountId?: string
+  ): Promise<void> {
+    
+    // Cenário 1: Status mudou de completed → pending
+    if (oldStatus === 'completed' && newStatus === 'pending') {
+      if (oldAccountId) {
+        await this.revertBalance(userId, oldAccountId, oldValue, oldType);
+      }
+      return;
+    }
+
+    // Cenário 2: Status mudou de pending → completed
+    if (oldStatus === 'pending' && newStatus === 'completed') {
+      if (newAccountId) {
+        await this.applyBalance(userId, newAccountId, newValue, newType);
+      }
+      return;
+    }
+
+    // Cenário 3: Transação já completed, mas mudaram valor/conta/tipo
+    if (oldStatus === 'completed' && newStatus === 'completed') {
+      // Reverter efeito antigo
+      if (oldAccountId) {
+        await this.revertBalance(userId, oldAccountId, oldValue, oldType);
+      }
+      
+      // Aplicar novo efeito
+      if (newAccountId) {
+        await this.applyBalance(userId, newAccountId, newValue, newType);
+      }
+      return;
+    }
+
+    // Cenário 4: Transação pending permanece pending
+    // Não afeta saldo, nada a fazer
+  }
+
+  private async revertBalance(
+    userId: string,
+    accountId: string,
+    value: number,
+    type: 'receita' | 'despesa' | 'transferencia'
+  ): Promise<void> {
+    const account = await this.financialAccountRepository.findByUserIdAndId(userId, accountId);
+    if (!account) return;
+
+    // Reverter: receita vira subtração, despesa vira adição
+    if (type === 'receita') {
+      account.subtrairValor(value);
+    } else if (type === 'despesa') {
+      account.adicionarValor(value);
+    }
+    
+    await this.financialAccountRepository.update(account);
+  }
+
+  private async applyBalance(
+    userId: string,
+    accountId: string,
+    value: number,
+    type: 'receita' | 'despesa' | 'transferencia'
+  ): Promise<void> {
+    const account = await this.financialAccountRepository.findByUserIdAndId(userId, accountId);
+    if (!account) {
+      throw new Error('Conta financeira não encontrada');
+    }
+
+    if (!account.isAtiva()) {
+      throw new Error('Conta financeira está inativa');
+    }
+
+    // Validar saldo para despesas
+    if (type === 'despesa') {
+      const saldoAtual = account.getSaldoAtual();
+      if (saldoAtual < value) {
+        throw new Error(`Saldo insuficiente. Saldo atual: R$ ${saldoAtual.toFixed(2)}, Valor solicitado: R$ ${value.toFixed(2)}`);
+      }
+    }
+
+    // Aplicar: receita soma, despesa subtrai
+    if (type === 'receita') {
+      account.adicionarValor(value);
+    } else if (type === 'despesa') {
+      account.subtrairValor(value);
+    }
+    
+    await this.financialAccountRepository.update(account);
   }
 
   private toResponseDto(transaction: Transaction): TransactionResponseDto {
@@ -198,6 +287,7 @@ export class UpdateTransactionUseCase {
       valor: transaction.getValor(),
       tipo: transaction.getTipo(),
       categoria: transaction.getCategoria(),
+      categoriaId: transaction.getCategoriaId(),
       subcategoria: transaction.getSubcategoria(),
       data: transaction.getData().toISOString(),
       status: transaction.getStatus(),

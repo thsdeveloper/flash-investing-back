@@ -26,7 +26,3 @@ export const authResponseSchema = z.object({
   accessToken: z.string().describe('Token JWT de acesso'),
   refreshToken: z.string().describe('Token JWT de refresh'),
 });
-
-export const errorResponseSchema = z.object({
-  error: z.string().describe('Mensagem de erro'),
-});

@@ -72,6 +72,7 @@ model Transaction {
   categoriaId       String?           // Nova FK para FinancialCategory
   subcategoria      String?
   data              DateTime
+  status            TransactionStatus @default(pending)
   observacoes       String?
   contaFinanceiraId String?
   userId            String
@@ -119,6 +120,13 @@ enum TransactionType {
   transferencia
 
   @@map("transaction_types")
+}
+
+enum TransactionStatus {
+  pending
+  completed
+
+  @@map("transaction_status")
 }
 
 model CreditCard {

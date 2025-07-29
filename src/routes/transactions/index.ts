@@ -9,12 +9,17 @@ import {
   transactionResponseSchema,
   transactionListResponseSchema,
   budgetResponseSchema,
-  budgetQuerySchema
+  budgetQuerySchema,
+  completeTransactionSchema,
+  patchTransactionSchema
 } from '../../schemas/transaction';
+import { errorResponseSchema } from '../../schemas/common';
 import { CreateTransactionUseCase } from '../../application/use-cases/create-transaction';
 import { UpdateTransactionUseCase } from '../../application/use-cases/update-transaction';
+import { PatchTransactionUseCase } from '../../application/use-cases/patch-transaction';
 import { DeleteTransactionUseCase } from '../../application/use-cases/delete-transaction';
 import { GetUserBudgetUseCase } from '../../application/use-cases/get-user-budget';
+import { CompleteTransactionUseCase } from '../../application/use-cases/complete-transaction';
 import { PrismaTransactionRepository } from '../../infrastructure/database/repositories/prisma-transaction-repository';
 import { PrismaFinancialAccountRepository } from '../../infrastructure/database/repositories/prisma-financial-account-repository';
 import { PrismaFinancialCategoryRepository } from '../../infrastructure/database/repositories/prisma-financial-category-repository';
@@ -53,6 +58,14 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
     prisma
   );
 
+  const patchTransactionUseCase = new PatchTransactionUseCase(
+    transactionRepository,
+    financialAccountRepository,
+    financialCategoryRepository,
+    userFinanceSettingsRepository,
+    prisma
+  );
+
   const deleteTransactionUseCase = new DeleteTransactionUseCase(
     transactionRepository,
     financialAccountRepository,
@@ -65,6 +78,12 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
     userFinanceSettingsRepository
   );
 
+  const completeTransactionUseCase = new CompleteTransactionUseCase(
+    transactionRepository,
+    financialAccountRepository,
+    prisma
+  );
+
   // Criar transação
   fastify.withTypeProvider<ZodTypeProvider>().route({
     method: 'POST',
@@ -75,9 +94,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       body: createTransactionSchema,
       response: {
         201: transactionResponseSchema,
-        400: z.object({
-          error: z.string()
-        })
+        400: errorResponseSchema
       }
     },
     preHandler: [
@@ -121,7 +138,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       querystring: transactionQuerySchema,
       response: {
         200: transactionListResponseSchema,
-        500: z.object({ error: z.string() })
+        500: errorResponseSchema
       }
     },
     preHandler: authMiddleware,
@@ -163,6 +180,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
             categoria: t.getCategoria(),
             subcategoria: t.getSubcategoria(),
             data: t.getData().toISOString(),
+            status: t.getStatus(),
             observacoes: t.getObservacoes(),
             contaFinanceiraId: t.getContaFinanceiraId(),
             userId: t.getUserId(),
@@ -197,9 +215,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       params: transactionParamsSchema,
       response: {
         200: transactionResponseSchema,
-        404: z.object({
-          error: z.string()
-        })
+        404: errorResponseSchema
       }
     },
     preHandler: authMiddleware,
@@ -220,6 +236,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           categoria: transaction.getCategoria(),
           subcategoria: transaction.getSubcategoria(),
           data: transaction.getData().toISOString(),
+          status: transaction.getStatus(),
           observacoes: transaction.getObservacoes(),
           contaFinanceiraId: transaction.getContaFinanceiraId(),
           userId: transaction.getUserId(),
@@ -247,9 +264,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       body: updateTransactionSchema,
       response: {
         200: transactionResponseSchema,
-        400: z.object({
-          error: z.string()
-        })
+        400: errorResponseSchema
       }
     },
     preHandler: authMiddleware,
@@ -259,6 +274,56 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
         const transaction = await updateTransactionUseCase.execute({
           id,
           ...request.body,
+          userId: (request as any).user.id
+        });
+
+        return reply.send(transaction);
+      } catch (error) {
+        return reply.status(400).send({ 
+          error: error instanceof Error ? error.message : 'Erro ao atualizar transação' 
+        });
+      }
+    }
+  });
+
+  // Atualizar parcialmente transação (PATCH)
+  fastify.withTypeProvider<ZodTypeProvider>().route({
+    method: 'PATCH',
+    url: '/:id',
+    schema: {
+      description: 'Atualizar parcialmente uma transação com lógica inteligente de saldo',
+      tags: ['Transactions'],
+      params: transactionParamsSchema,
+      body: patchTransactionSchema,
+      response: {
+        200: transactionResponseSchema,
+        400: errorResponseSchema
+      }
+    },
+    preHandler: authMiddleware,
+    handler: async (request, reply) => {
+      try {
+        const { id } = (request.params as any);
+        const requestBody = { ...request.body };
+        
+        // Validar que pelo menos um campo foi fornecido
+        if (Object.keys(requestBody).length === 0) {
+          return reply.status(400).send({
+            error: 'Pelo menos um campo deve ser fornecido para atualização'
+          });
+        }
+        
+        // Se categoria for um UUID, mapear para categoriaId
+        if (requestBody.categoria && 
+            typeof requestBody.categoria === 'string' &&
+            requestBody.categoria.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          requestBody.categoriaId = requestBody.categoria;
+          requestBody.categoria = undefined;
+        }
+        
+        const transaction = await patchTransactionUseCase.execute({
+          id,
+          ...requestBody,
           userId: (request as any).user.id
         });
 
@@ -281,9 +346,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       params: transactionParamsSchema,
       response: {
         204: z.null(),
-        400: z.object({
-          error: z.string()
-        })
+        400: errorResponseSchema
       }
     },
     preHandler: authMiddleware,
@@ -304,6 +367,37 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
     }
   });
 
+  // Marcar transação como efetuada (completed)
+  fastify.withTypeProvider<ZodTypeProvider>().route({
+    method: 'POST',
+    url: '/:id/complete',
+    schema: {
+      description: 'Marcar transação como efetuada (completed)',
+      tags: ['Transactions'],
+      params: transactionParamsSchema,
+      response: {
+        200: transactionResponseSchema,
+        400: errorResponseSchema
+      }
+    },
+    preHandler: authMiddleware,
+    handler: async (request, reply) => {
+      try {
+        const { id } = (request.params as any);
+        const transaction = await completeTransactionUseCase.execute({
+          id,
+          userId: (request as any).user.id
+        });
+
+        return reply.send(transaction);
+      } catch (error) {
+        return reply.status(400).send({ 
+          error: error instanceof Error ? error.message : 'Erro ao marcar transação como efetuada' 
+        });
+      }
+    }
+  });
+
   // Obter orçamento do usuário
   fastify.withTypeProvider<ZodTypeProvider>().route({
     method: 'GET',
@@ -314,7 +408,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       querystring: budgetQuerySchema,
       response: {
         200: budgetResponseSchema,
-        500: z.object({ error: z.string() })
+        500: errorResponseSchema
       }
     },
     preHandler: authMiddleware,
