@@ -26,12 +26,12 @@ export class GetDebtByIdUseCase {
       tipo_divida: debt.tipoDiv,
       valor_original: debt.valorOriginal,
       valor_atual: debt.valorAtual,
-      taxa_juros: debt.taxaJuros,
+      taxa_juros: debt.taxaJuros ?? null,
       data_vencimento: safeToISOString(debt.dataVencimento),
       status: debt.status,
-      descricao: debt.descricao,
-      parcelas_total: debt.parcelasTotal,
-      valor_parcela: debt.valorParcela,
+      descricao: debt.descricao ?? null,
+      parcelas_total: debt.parcelasTotal ?? null,
+      valor_parcela: debt.valorParcela ?? null,
       created_at: safeToISOString(debt.createdAt),
       updated_at: safeToISOString(debt.updatedAt),
       pagamentos: (debt.payments || []).map(payment => ({
@@ -39,14 +39,14 @@ export class GetDebtByIdUseCase {
         valor: payment?.valor,
         data_pagamento: safeToISOString(payment?.data_pagamento),
         tipo: payment?.tipo,
-        observacoes: payment?.observacoes,
+        observacoes: payment?.observacoes ?? null,
       })),
       negociacoes: (debt.negotiations || []).map(negotiation => ({
         id: negotiation?.id,
         data_negociacao: safeToISOString(negotiation?.data_negociacao),
         proposta: negotiation?.proposta,
         status: negotiation?.status,
-        observacoes: negotiation?.observacoes,
+        observacoes: negotiation?.observacoes ?? null,
       })),
     };
   }

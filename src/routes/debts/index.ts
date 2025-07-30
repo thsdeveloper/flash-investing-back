@@ -17,6 +17,9 @@ import { UpdateDebtUseCase } from '../../application/use-cases/debts/update-debt
 import { DeleteDebtUseCase } from '../../application/use-cases/debts/delete-debt';
 import { CreateDebtPaymentUseCase } from '../../application/use-cases/debts/create-debt-payment';
 import { ListDebtPaymentsUseCase } from '../../application/use-cases/debts/list-debt-payments';
+import { CreateDebtNegotiationUseCase } from '../../application/use-cases/debts/create-debt-negotiation';
+import { UpdateDebtNegotiationUseCase } from '../../application/use-cases/debts/update-debt-negotiation';
+import { ListDebtNegotiationsUseCase } from '../../application/use-cases/debts/list-debt-negotiations';
 import { GetDebtSummaryUseCase } from '../../application/use-cases/debts/get-debt-summary';
 import { GetDebtEvolutionUseCase } from '../../application/use-cases/debts/get-debt-evolution';
 import { SimulatePaymentScenariosUseCase } from '../../application/use-cases/debts/simulate-payment-scenarios';
@@ -30,6 +33,9 @@ import {
   listDebtsQuerySchema,
   createDebtPaymentSchema,
   debtPaymentResponseSchema,
+  createDebtNegotiationSchema,
+  updateDebtNegotiationSchema,
+  debtNegotiationResponseSchema,
   debtSummaryResponseSchema,
   evolutionReportResponseSchema,
   evolutionReportQuerySchema,
@@ -729,6 +735,247 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           });
         }
 
+        return reply.status(500).send({
+          success: false,
+          data: null,
+          message: 'Erro interno do servidor',
+          errors: [error instanceof Error ? error.message : 'Unknown error'],
+          meta: {
+            timestamp: new Date().toISOString(),
+            version: '1.0.0'
+          }
+        });
+      }
+    }
+  });
+
+  // POST /api/v1/dividas/:debtId/negociacoes - Create debt negotiation
+  fastify.withTypeProvider<ZodTypeProvider>().route({
+    method: 'POST',
+    url: '/:debtId/negociacoes',
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Registra uma negociação para uma dívida',
+      tags: ['Gestão de Dívidas'],
+      security: [{ bearerAuth: [] }],
+      params: z.object({
+        debtId: z.string().uuid()
+      }),
+      body: createDebtNegotiationSchema,
+      response: {
+        201: baseResponseSchema.extend({
+          success: z.literal(true),
+          data: debtNegotiationResponseSchema
+        }),
+        400: errorResponseSchema,
+        404: errorResponseSchema,
+        401: errorResponseSchema,
+        422: errorResponseSchema,
+        500: errorResponseSchema
+      }
+    },
+    handler: async (request, reply) => {
+      try {
+        const createDebtNegotiationUseCase = new CreateDebtNegotiationUseCase(
+          debtRepository,
+          debtNegotiationRepository
+        );
+        const { debtId } = request.params as { debtId: string };
+        const body = request.body as any;
+
+        const negotiation = await createDebtNegotiationUseCase.execute({
+          debtId,
+          data_negociacao: body.data_negociacao,
+          proposta: body.proposta,
+          status: body.status,
+          observacoes: body.observacoes,
+          userId: (request as AuthenticatedRequest).user.id
+        });
+
+        if (!negotiation) {
+          return reply.status(404).send({
+            success: false,
+            data: null,
+            message: 'Dívida não encontrada',
+            errors: ['DEBT_NOT_FOUND'],
+            meta: {
+              timestamp: new Date().toISOString(),
+              version: '1.0.0'
+            }
+          });
+        }
+
+        return reply.status(201).send({
+          success: true,
+          data: negotiation,
+          message: 'Negociação registrada com sucesso',
+          errors: null,
+          meta: {
+            timestamp: new Date().toISOString(),
+            version: '1.0.0'
+          }
+        });
+      } catch (error) {
+        return reply.status(500).send({
+          success: false,
+          data: null,
+          message: 'Erro interno do servidor',
+          errors: [error instanceof Error ? error.message : 'Unknown error'],
+          meta: {
+            timestamp: new Date().toISOString(),
+            version: '1.0.0'
+          }
+        });
+      }
+    }
+  });
+
+  // GET /api/v1/dividas/:debtId/negociacoes - List debt negotiations
+  fastify.withTypeProvider<ZodTypeProvider>().route({
+    method: 'GET',
+    url: '/:debtId/negociacoes',
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Lista todas as negociações de uma dívida',
+      tags: ['Gestão de Dívidas'],
+      security: [{ bearerAuth: [] }],
+      params: z.object({
+        debtId: z.string().uuid()
+      }),
+      querystring: z.object({
+        page: z.coerce.number().min(1).default(1),
+        limit: z.coerce.number().min(1).max(100).default(10)
+      }),
+      response: {
+        200: baseResponseSchema.extend({
+          success: z.literal(true),
+          data: z.object({
+            negociacoes: z.array(debtNegotiationResponseSchema),
+            pagination: z.object({
+              current_page: z.number(),
+              total_pages: z.number(),
+              total_items: z.number(),
+              items_per_page: z.number()
+            })
+          })
+        }),
+        401: errorResponseSchema,
+        500: errorResponseSchema
+      }
+    },
+    handler: async (request, reply) => {
+      try {
+        const listDebtNegotiationsUseCase = new ListDebtNegotiationsUseCase(
+          debtNegotiationRepository
+        );
+        const { debtId } = request.params as { debtId: string };
+        const query = request.query as any;
+
+        const result = await listDebtNegotiationsUseCase.execute({
+          debtId,
+          userId: (request as AuthenticatedRequest).user.id,
+          page: query.page || 1,
+          limit: query.limit || 10
+        });
+
+        return reply.status(200).send({
+          success: true,
+          data: result,
+          message: 'Negociações recuperadas com sucesso',
+          errors: null,
+          meta: {
+            timestamp: new Date().toISOString(),
+            version: '1.0.0'
+          }
+        });
+      } catch (error) {
+        return reply.status(500).send({
+          success: false,
+          data: null,
+          message: 'Erro interno do servidor',
+          errors: [error instanceof Error ? error.message : 'Unknown error'],
+          meta: {
+            timestamp: new Date().toISOString(),
+            version: '1.0.0'
+          }
+        });
+      }
+    }
+  });
+
+  // PUT /api/v1/dividas/negociacoes/:id - Update debt negotiation
+  fastify.withTypeProvider<ZodTypeProvider>().route({
+    method: 'PUT',
+    url: '/negociacoes/:id',
+    preHandler: authMiddleware,
+    schema: {
+      description: 'Atualiza o status de uma negociação',
+      tags: ['Gestão de Dívidas'],
+      security: [{ bearerAuth: [] }],
+      params: z.object({
+        id: z.string().uuid()
+      }),
+      body: updateDebtNegotiationSchema,
+      response: {
+        200: baseResponseSchema.extend({
+          success: z.literal(true),
+          data: z.object({
+            id: z.string().uuid(),
+            status: z.enum(['pendente', 'aceita', 'rejeitada', 'em_andamento']),
+            observacoes: z.string().nullable(),
+            updated_at: z.string()
+          })
+        }),
+        404: errorResponseSchema,
+        401: errorResponseSchema,
+        422: errorResponseSchema,
+        500: errorResponseSchema
+      }
+    },
+    handler: async (request, reply) => {
+      try {
+        const updateDebtNegotiationUseCase = new UpdateDebtNegotiationUseCase(
+          debtNegotiationRepository
+        );
+        const { id } = request.params as { id: string };
+        const body = request.body as any;
+
+        const negotiation = await updateDebtNegotiationUseCase.execute({
+          id,
+          status: body.status,
+          observacoes: body.observacoes,
+          userId: (request as AuthenticatedRequest).user.id
+        });
+
+        if (!negotiation) {
+          return reply.status(404).send({
+            success: false,
+            data: null,
+            message: 'Negociação não encontrada',
+            errors: ['NEGOTIATION_NOT_FOUND'],
+            meta: {
+              timestamp: new Date().toISOString(),
+              version: '1.0.0'
+            }
+          });
+        }
+
+        return reply.status(200).send({
+          success: true,
+          data: {
+            id: negotiation.id,
+            status: negotiation.status,
+            observacoes: negotiation.observacoes,
+            updated_at: negotiation.updated_at
+          },
+          message: 'Negociação atualizada com sucesso',
+          errors: null,
+          meta: {
+            timestamp: new Date().toISOString(),
+            version: '1.0.0'
+          }
+        });
+      } catch (error) {
         return reply.status(500).send({
           success: false,
           data: null,
