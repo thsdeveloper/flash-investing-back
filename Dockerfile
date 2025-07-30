@@ -22,5 +22,5 @@ RUN yarn build
 # Expose port
 EXPOSE 3001
 
-# Start the application
-CMD ["yarn", "start"]
+# Start the application with migrations
+CMD ["yarn", "deploy"]
