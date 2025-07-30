@@ -1,6 +1,9 @@
 # Use Node.js 20 LTS
 FROM node:20-alpine
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
 # Set working directory
 WORKDIR /app
 
@@ -10,17 +13,23 @@ COPY package.json yarn.lock ./
 # Install dependencies
 RUN yarn install --frozen-lockfile
 
-# Copy source code
-COPY . .
+# Copy Prisma schema
+COPY prisma ./prisma/
 
 # Generate Prisma client
 RUN yarn db:generate
 
+# Copy source code
+COPY . .
+
 # Build the application
 RUN yarn build
 
-# Expose port
+# Expose port (Railway will override this)
 EXPOSE 3001
 
+# Copy deployment script
+COPY scripts/deploy.js ./scripts/
+
 # Start the application with migrations
-CMD ["yarn", "deploy"]
+CMD ["node", "scripts/deploy.js"]
