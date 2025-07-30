@@ -6,7 +6,7 @@
     "dev": "tsx src/server.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/server.js",
-    "deploy": "prisma migrate deploy && node dist/server.js",
+    "deploy": "prisma migrate resolve --applied \"20250715030526_init\" && prisma migrate resolve --applied \"20250717185041_add_conta_financeira_to_credit_cards\" && prisma migrate resolve --applied \"20250723143234_add_category_foreign_keys\" && prisma migrate deploy && node dist/server.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
