@@ -28,8 +28,5 @@ RUN yarn build
 # Expose port (Railway will override this)
 EXPOSE 3001
 
-# Copy deployment script
-COPY scripts/deploy.js ./scripts/
-
-# Start the application with migrations
-CMD ["node", "scripts/deploy.js"]
+# Start the application (migrations handled by Railway pre-deploy)
+CMD ["node", "dist/server.js"]
