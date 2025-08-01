@@ -95,7 +95,7 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
       security: [{ bearerAuth: [] }],
       querystring: investmentRecommendationQuerySchema,
       response: {
-        200: standardPaginatedResponseSchema(recommendationResponseSchema),
+        200: standardSuccessResponseSchema(z.array(recommendationResponseSchema)),
         401: standardError401Schema,
         500: standardError500Schema
       },
@@ -110,12 +110,8 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
         const currentPage = query.page || 1;
         const itemsPerPage = query.limit || 20;
         
-        const response = ResponseHelper.successPaginated(
+        const response = ResponseHelper.success(
           recommendations,
-          currentPage,
-          0, // totalPages
-          0, // totalItems
-          itemsPerPage,
           { message: 'Recomendações recuperadas com sucesso' }
         );
 
@@ -139,9 +135,7 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
       tags: ['Investment Recommendations'],
       security: [{ bearerAuth: [] }],
       response: {
-        200: standardSuccessResponseSchema(z.object({
-          recommendations: z.array(recommendationResponseSchema)
-        })),
+        200: standardSuccessResponseSchema(z.array(recommendationResponseSchema)),
         401: standardError401Schema,
         500: standardError500Schema
       },
@@ -151,10 +145,10 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
         const userId = request.user.id;
 
         // TODO: Implement GetActiveInvestmentRecommendationsUseCase
-        const result = { recommendations: [] };
+        const recommendations = [];
 
         const response = ResponseHelper.success(
-          result,
+          recommendations,
           { message: 'Recomendações ativas recuperadas com sucesso' }
         );
         
@@ -187,7 +181,7 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
     },
     handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = request.params as any;
+        const { id } = request.params ;
         const userId = request.user.id;
 
         // TODO: Implement GetInvestmentRecommendationByIdUseCase
@@ -222,7 +216,7 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
     },
     handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = request.params as any;
+        const { id } = request.params ;
         const userId = request.user.id;
         const body = request.body;
 
@@ -257,7 +251,7 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
     },
     handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = request.params as any;
+        const { id } = request.params ;
         const userId = request.user.id;
 
         // TODO: Implement ToggleInvestmentRecommendationUseCase

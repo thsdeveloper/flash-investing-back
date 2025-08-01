@@ -65,7 +65,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
           creditCardRepository
         );
         
-        const body = request.body as any;
+        const body = request.body ;
         const result = await createUseCase.execute({
           ...body,
           dataCompra: new Date(body.dataCompra),
@@ -111,7 +111,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
           creditCardTransactionRepository
         );
         
-        const query = request.query as any;
+        const query = request.query ;
         const filters = {
           creditCardId: query.creditCardId,
           categoria: query.categoria,
@@ -168,7 +168,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         
         const result = await getTransactionByIdUseCase.execute(
           (request as AuthenticatedRequest).user.id,
-          (request.params as any).id
+          (request.params ).id
         );
         
         if (!result) {
@@ -219,7 +219,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
           creditCardRepository
         );
         
-        const body = request.body as any;
+        const body = request.body ;
         const updateData = {
           ...body,
           dataCompra: body.dataCompra ? new Date(body.dataCompra) : undefined,
@@ -227,7 +227,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         
         const result = await updateUseCase.execute(
           (request as AuthenticatedRequest).user.id,
-          (request.params as any).id,
+          (request.params ).id,
           updateData
         );
         
@@ -277,7 +277,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         
         await deleteUseCase.execute(
           (request as AuthenticatedRequest).user.id,
-          (request.params as any).id
+          (request.params ).id
         );
         
         const response = ResponseHelper.success(
@@ -322,7 +322,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         );
         
         const result = await getTransactionsUseCase.findByCreditCardId(
-          (request.params as any).creditCardId
+          (request.params ).creditCardId
         );
         
         const response = ResponseHelper.success(
@@ -363,7 +363,7 @@ const creditCardTransactionRoutes: FastifyPluginAsync = async function (fastify)
         );
         
         const result = await getTransactionsUseCase.findByInvoiceId(
-          (request.params as any).invoiceId
+          (request.params ).invoiceId
         );
         
         const response = ResponseHelper.success(

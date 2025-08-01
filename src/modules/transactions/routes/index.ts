@@ -150,7 +150,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       tags: ['Transactions'],
       querystring: transactionQuerySchema,
       response: {
-        200: standardPaginatedResponseSchema(transactionResponseSchema),
+        200: standardSuccessResponseSchema(z.array(transactionResponseSchema)),
         401: standardError401Schema,
         500: standardError500Schema
       }
@@ -158,7 +158,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
     preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
-        const { contaFinanceiraId, categoria, tipo, startDate, endDate, limit, offset } = request.query as any;
+        const { contaFinanceiraId, categoria, tipo, startDate, endDate, limit, offset } = request.query ;
 
         let transactions;
         if (contaFinanceiraId) {
@@ -212,12 +212,8 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           }
         };
 
-        const response = ResponseHelper.successPaginated(
-          transactionData,
-          currentPage,
-          totalPages,
-          total,
-          itemsPerPage,
+        const response = ResponseHelper.success(
+          transactionData.items,
           { message: 'Transações recuperadas com sucesso' }
         );
 
@@ -247,7 +243,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
     preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
-        const { id } = (request.params as any);
+        const { id } = (request.params );
         const transaction = await transactionRepository.findById(id);
 
         if (!transaction || !transaction.belongsToUser((request as AuthenticatedRequest).user.id)) {
@@ -304,7 +300,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
     preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
-        const { id } = (request.params as any);
+        const { id } = (request.params );
         const transaction = await updateTransactionUseCase.execute({
           id,
           ...request.body,
@@ -357,7 +353,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
     preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
-        const { id } = (request.params as any);
+        const { id } = (request.params );
         const requestBody = { ...request.body };
         
         // Validar que pelo menos um campo foi fornecido
@@ -428,7 +424,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
     preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
-        const { id } = (request.params as any);
+        const { id } = (request.params );
         await deleteTransactionUseCase.execute({
           id,
           userId: (request as AuthenticatedRequest).user.id
@@ -479,7 +475,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
     preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
-        const { id } = (request.params as any);
+        const { id } = (request.params );
         const transaction = await completeTransactionUseCase.execute({
           id,
           userId: (request as AuthenticatedRequest).user.id
@@ -528,7 +524,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
     preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
-        const { startDate, endDate } = (request.query as any);
+        const { startDate, endDate } = (request.query );
         
         const budget = await getUserBudgetUseCase.execute({
           userId: (request as AuthenticatedRequest).user.id,

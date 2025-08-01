@@ -53,7 +53,7 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
       security: [{ bearerAuth: [] }],
       querystring: financialAccountQuerySchema,
       response: {
-        200: standardPaginatedResponseSchema(financialAccountResponseSchema),
+        200: standardSuccessResponseSchema(z.array(financialAccountResponseSchema)),
         401: standardError401Schema,
         500: standardError500Schema
       }
@@ -66,27 +66,23 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           // Sem filtros - retorna todas as contas do usuário
         });
         
-        const response = ResponseHelper.successPaginated(
+        const response = ResponseHelper.success(
           result.data,
-          1, // current page - implementar paginação futuramente
-          1, // total pages
-          result.meta.total_count,
-          result.meta.filter_count,
           { message: 'Contas financeiras recuperadas com sucesso' }
         );
         
-        return reply.status(200).send(response as any);
+        return reply.status(200).send(response);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response as any);
+          return reply.status(400).send(response );
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response as any);
+        return reply.status(500).send(response );
       }
     },
   });
@@ -122,23 +118,23 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conta financeira recuperada com sucesso' }
         );
         
-        return reply.status(200).send(response as any);
+        return reply.status(200).send(response );
       } catch (error) {
         if (error instanceof DomainError) {
           if (error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND') {
             const response = ResponseHelper.notFound('Conta financeira');
-            return reply.status(404).send(response as any);
+            return reply.status(404).send(response );
           }
           
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response as any);
+          return reply.status(400).send(response );
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response as any);
+        return reply.status(500).send(response );
       }
     },
   });
@@ -162,7 +158,7 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const body = request.body as any;
+        const body = request.body ;
         const createAccountUseCase = new CreateFinancialAccountUseCase(financialAccountRepository);
         const result = await createAccountUseCase.execute({
           nome: body.nome,
@@ -180,18 +176,18 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conta financeira criada com sucesso' }
         );
         
-        return reply.status(201).send(response as any);
+        return reply.status(201).send(response );
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response as any);
+          return reply.status(400).send(response );
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response as any);
+        return reply.status(500).send(response );
       }
     },
   });
@@ -219,7 +215,7 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const body = request.body as any;
+        const body = request.body ;
         const { id } = request.params as { id: string };
         const updateAccountUseCase = new UpdateFinancialAccountUseCase(financialAccountRepository);
         const result = await updateAccountUseCase.execute(
@@ -243,23 +239,23 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conta financeira atualizada com sucesso' }
         );
         
-        return reply.status(200).send(response as any);
+        return reply.status(200).send(response );
       } catch (error) {
         if (error instanceof DomainError) {
           if (error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND') {
             const response = ResponseHelper.notFound('Conta financeira');
-            return reply.status(404).send(response as any);
+            return reply.status(404).send(response );
           }
           
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response as any);
+          return reply.status(400).send(response );
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response as any);
+        return reply.status(500).send(response );
       }
     },
   });
@@ -289,7 +285,7 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
     },
     handler: async (request, reply) => {
       try {
-        const query = request.query as any;
+        const query = request.query ;
         const { id } = request.params as { id: string };
         const deleteAccountUseCase = new DeleteFinancialAccountUseCase(financialAccountRepository);
         await deleteAccountUseCase.execute(
@@ -303,23 +299,23 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conta financeira removida com sucesso' }
         );
         
-        return reply.status(200).send(response as any);
+        return reply.status(200).send(response );
       } catch (error) {
         if (error instanceof DomainError) {
           if (error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND') {
             const response = ResponseHelper.notFound('Conta financeira');
-            return reply.status(404).send(response as any);
+            return reply.status(404).send(response );
           }
           
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response as any);
+          return reply.status(400).send(response );
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response as any);
+        return reply.status(500).send(response );
       }
     },
   });

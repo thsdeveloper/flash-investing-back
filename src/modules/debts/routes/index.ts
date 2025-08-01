@@ -6,6 +6,14 @@ import { prisma } from '@src/infrastructure/database/prisma-client';
 
 // Common response schemas
 import { z } from 'zod';
+import { 
+  standardSuccessResponseSchema,
+  standardError400Schema,
+  standardError401Schema,
+  standardError404Schema,
+  standardError500Schema
+} from '@src/modules/shared/schemas/common';
+import { ResponseHelper } from '@src/modules/shared/utils/response-helper';
 import {PrismaDebtRepository} from "@src/modules/debts/infrastructure/repositories/prisma-debt-repository";
 import {
   PrismaDebtPaymentRepository
@@ -66,26 +74,15 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
       security: [{ bearerAuth: [] }],
       querystring: listDebtsQuerySchema,
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: z.object({
-            dividas: z.array(debtResponseSchema),
-            pagination: z.object({
-              current_page: z.number(),
-              total_pages: z.number(),
-              total_items: z.number(),
-              items_per_page: z.number()
-            })
-          })
-        }),
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(z.array(debtResponseSchema)),
+        401: standardError401Schema,
+        500: standardError500Schema
       }
     },
     handler: async (request, reply) => {
       try {
         const listDebtsUseCase = new ListDebtsUseCase(debtRepository);
-        const query = request.query as any;
+        const query = request.query ;
 
         const result = await listDebtsUseCase.execute({
           page: query.page || 1,
@@ -97,27 +94,15 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           userId: (request as AuthenticatedRequest).user.id
         });
 
-        return reply.status(200).send({
-          success: true,
-          data: result,
-          message: 'Dívidas recuperadas com sucesso',
-          errors: null,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.success(
+          result.dividas,
+          { message: 'Dívidas recuperadas com sucesso' }
+        );
+        
+        return reply.status(200).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -146,7 +131,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
     handler: async (request, reply) => {
       try {
         const createDebtUseCase = new CreateDebtUseCase(debtRepository);
-        const body = request.body as any;
+        const body = request.body ;
 
         const debt = await createDebtUseCase.execute({
           credor: body.credor,
@@ -171,16 +156,8 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           }
         });
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -243,16 +220,8 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         });
       } catch (error) {
         console.error('Error in get debt by id:', error);
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -285,7 +254,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
       try {
         const updateDebtUseCase = new UpdateDebtUseCase(debtRepository);
         const { id } = request.params as { id: string };
-        const body = request.body as any;
+        const body = request.body ;
 
         const debt = await updateDebtUseCase.execute({
           id,
@@ -317,16 +286,8 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           }
         });
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -384,16 +345,8 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           }
         });
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -430,7 +383,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           debtPaymentRepository
         );
         const { debtId } = request.params as { debtId: string };
-        const body = request.body as any;
+        const body = request.body ;
 
         const result = await createDebtPaymentUseCase.execute({
           debtId,
@@ -478,16 +431,8 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           });
         }
 
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -509,18 +454,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         limit: z.coerce.number().min(1).max(100).default(10)
       }),
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: z.object({
-            pagamentos: z.array(debtPaymentResponseSchema),
-            pagination: z.object({
-              current_page: z.number(),
-              total_pages: z.number(),
-              total_items: z.number(),
-              items_per_page: z.number()
-            })
-          })
-        }),
+        200: standardSuccessResponseSchema(z.array(debtPaymentResponseSchema)),
         401: errorResponseSchema,
         500: errorResponseSchema
       }
@@ -529,7 +463,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
       try {
         const listDebtPaymentsUseCase = new ListDebtPaymentsUseCase(debtPaymentRepository);
         const { debtId } = request.params as { debtId: string };
-        const query = request.query as any;
+        const query = request.query ;
 
         const result = await listDebtPaymentsUseCase.execute(
           debtId,
@@ -540,27 +474,15 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           }
         );
 
-        return reply.status(200).send({
-          success: true,
-          data: result,
-          message: 'Pagamentos recuperados com sucesso',
-          errors: null,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.success(
+          result.pagamentos,
+          { message: 'Pagamentos recuperados com sucesso' }
+        );
+        
+        return reply.status(200).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -600,16 +522,8 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           }
         });
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -636,7 +550,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
     handler: async (request, reply) => {
       try {
         const getDebtEvolutionUseCase = new GetDebtEvolutionUseCase(debtRepository);
-        const query = request.query as any;
+        const query = request.query ;
 
         const evolution = await getDebtEvolutionUseCase.execute({
           periodo: query.periodo || '6m',
@@ -654,16 +568,8 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           }
         });
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -692,7 +598,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
     handler: async (request, reply) => {
       try {
         const simulatePaymentScenariosUseCase = new SimulatePaymentScenariosUseCase(debtRepository);
-        const body = request.body as any;
+        const body = request.body ;
 
         const simulation = await simulatePaymentScenariosUseCase.execute({
           dividas_ids: body.dividas_ids,
@@ -724,16 +630,8 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           });
         }
 
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -770,7 +668,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           debtNegotiationRepository
         );
         const { debtId } = request.params as { debtId: string };
-        const body = request.body as any;
+        const body = request.body ;
 
         const negotiation = await createDebtNegotiationUseCase.execute({
           debtId,
@@ -805,16 +703,8 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           }
         });
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -836,18 +726,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         limit: z.coerce.number().min(1).max(100).default(10)
       }),
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: z.object({
-            negociacoes: z.array(debtNegotiationResponseSchema),
-            pagination: z.object({
-              current_page: z.number(),
-              total_pages: z.number(),
-              total_items: z.number(),
-              items_per_page: z.number()
-            })
-          })
-        }),
+        200: standardSuccessResponseSchema(z.array(debtNegotiationResponseSchema)),
         401: errorResponseSchema,
         500: errorResponseSchema
       }
@@ -858,7 +737,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           debtNegotiationRepository
         );
         const { debtId } = request.params as { debtId: string };
-        const query = request.query as any;
+        const query = request.query ;
 
         const result = await listDebtNegotiationsUseCase.execute({
           debtId,
@@ -867,27 +746,15 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           limit: query.limit || 10
         });
 
-        return reply.status(200).send({
-          success: true,
-          data: result,
-          message: 'Negociações recuperadas com sucesso',
-          errors: null,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.success(
+          result.negociacoes,
+          { message: 'Negociações recuperadas com sucesso' }
+        );
+        
+        return reply.status(200).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -927,7 +794,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           debtNegotiationRepository
         );
         const { id } = request.params as { id: string };
-        const body = request.body as any;
+        const body = request.body ;
 
         const negotiation = await updateDebtNegotiationUseCase.execute({
           id,
@@ -965,16 +832,8 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           }
         });
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Erro interno do servidor',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });

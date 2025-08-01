@@ -90,7 +90,7 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         limit: z.coerce.number().min(1).max(100).default(20)
       }),
       response: {
-        200: standardPaginatedResponseSchema(portfolioResponseSchema),
+        200: standardSuccessResponseSchema(z.array(portfolioResponseSchema)),
         401: standardError401Schema,
         500: standardError500Schema
       }
@@ -105,12 +105,8 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         const currentPage = query.page || 1;
         const itemsPerPage = query.limit || 20;
         
-        const response = ResponseHelper.successPaginated(
+        const response = ResponseHelper.success(
           portfolios,
-          currentPage,
-          0, // totalPages
-          0, // totalItems
-          itemsPerPage,
           { message: 'Portfólios recuperados com sucesso' }
         );
 

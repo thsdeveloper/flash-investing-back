@@ -53,7 +53,7 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       try {
         const createUseCase = new CreateCreditCardUseCase(creditCardRepository, financialAccountRepository);
         
-        const body = request.body as any;
+        const body = request.body ;
         const userId = (request as AuthenticatedRequest).user.id;
         const result = await createUseCase.execute(userId, body);
         
@@ -130,7 +130,7 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       try {
         const getCreditCardByIdUseCase = new GetCreditCardByIdUseCase(creditCardRepository);
         
-        const { id } = request.params as any;
+        const { id } = request.params ;
         const userId = (request as AuthenticatedRequest).user.id;
         const result = await getCreditCardByIdUseCase.execute(userId, id);
         
@@ -179,8 +179,8 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       try {
         const updateCreditCardUseCase = new UpdateCreditCardUseCase(creditCardRepository, financialAccountRepository);
         
-        const { id } = request.params as any;
-        const body = request.body as any;
+        const { id } = request.params ;
+        const body = request.body ;
         const userId = (request as AuthenticatedRequest).user.id;
         const result = await updateCreditCardUseCase.execute(userId, id, body);
         
@@ -223,7 +223,7 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
       try {
         const deleteCreditCardUseCase = new DeleteCreditCardUseCase(creditCardRepository);
         
-        const { id } = request.params as any;
+        const { id } = request.params ;
         const userId = (request as AuthenticatedRequest).user.id;
         await deleteCreditCardUseCase.execute(userId, id);
         

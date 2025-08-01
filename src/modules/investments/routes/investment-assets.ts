@@ -91,7 +91,7 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
       security: [{ bearerAuth: [] }],
       querystring: investmentAssetQuerySchema,
       response: {
-        200: standardPaginatedResponseSchema(assetResponseSchema),
+        200: standardSuccessResponseSchema(z.array(assetResponseSchema)),
         401: standardError401Schema,
         500: standardError500Schema
       },
@@ -105,12 +105,8 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
         const currentPage = query.page || 1;
         const itemsPerPage = query.limit || 20;
         
-        const response = ResponseHelper.successPaginated(
+        const response = ResponseHelper.success(
           assets,
-          currentPage,
-          0, // totalPages
-          0, // totalItems
-          itemsPerPage,
           { message: 'Ativos recuperados com sucesso' }
         );
 
@@ -143,7 +139,7 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
     },
     handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = request.params as any;
+        const { id } = request.params ;
 
         // TODO: Implement GetInvestmentAssetByIdUseCase
         const response = ResponseHelper.notFound('Ativo');
@@ -177,7 +173,7 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
     },
     handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = request.params as any;
+        const { id } = request.params ;
         const body = request.body;
 
         // TODO: Implement UpdateInvestmentAssetUseCase
