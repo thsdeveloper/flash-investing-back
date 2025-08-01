@@ -9,23 +9,16 @@ import {
   investmentRecommendationParamsSchema,
   investmentRecommendationQuerySchema,
 } from '../schemas/investment-recommendation';
+import { 
+  standardSuccessResponseSchema,
+  standardPaginatedResponseSchema,
+  standardError400Schema,
+  standardError401Schema,
+  standardError404Schema,
+  standardError500Schema
+} from '@src/modules/shared/schemas/common';
+import { ResponseHelper } from '@src/modules/shared/utils/response-helper';
 import { z } from 'zod';
-
-// Base response schema seguindo o padrão do módulo de dívidas
-const baseResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  errors: z.array(z.any()).nullable(),
-  meta: z.object({
-    timestamp: z.string(),
-    version: z.string()
-  })
-});
-
-const errorResponseSchema = baseResponseSchema.extend({
-  success: z.literal(false),
-  data: z.null()
-});
 
 // Recommendation response schema usando Zod
 const recommendationResponseSchema = z.object({
@@ -56,20 +49,16 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
       security: [{ bearerAuth: [] }],
       body: createInvestmentRecommendationSchema.omit({ userId: true }),
       response: {
-        201: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: recommendationResponseSchema
-        }),
-        400: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        201: standardSuccessResponseSchema(recommendationResponseSchema),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       },
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const userId = authRequest.user.id;
-        const body = authRequest.body as any;
+        const userId = request.user.id;
+        const body = request.body;
 
         // TODO: Implement CreateInvestmentRecommendationUseCase
         const recommendation = {
@@ -80,27 +69,17 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
           updatedAt: new Date(),
         };
 
-        return reply.status(201).send({
-          success: true,
-          data: recommendation,
-          message: 'Investment recommendation created successfully',
-          errors: null,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.success(
+          recommendation,
+          { message: 'Recomendação de investimento criada com sucesso' }
+        );
+        
+        return reply.status(201).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -116,60 +95,36 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
       security: [{ bearerAuth: [] }],
       querystring: investmentRecommendationQuerySchema,
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: z.object({
-            recommendations: z.array(recommendationResponseSchema),
-            pagination: z.object({
-              current_page: z.number(),
-              total_pages: z.number(),
-              total_items: z.number(),
-              items_per_page: z.number()
-            })
-          })
-        }),
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardPaginatedResponseSchema(recommendationResponseSchema),
+        401: standardError401Schema,
+        500: standardError500Schema
       },
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const userId = authRequest.user.id;
-        const query = authRequest.query as any;
+        const userId = request.user.id;
+        const query = request.query;
 
         // TODO: Implement GetInvestmentRecommendationsUseCase
-        const result = {
-          recommendations: [],
-          pagination: {
-            current_page: query.page || 1,
-            total_pages: 0,
-            total_items: 0,
-            items_per_page: query.limit || 20
-          }
-        };
+        const recommendations: any[] = [];
+        const currentPage = query.page || 1;
+        const itemsPerPage = query.limit || 20;
+        
+        const response = ResponseHelper.successPaginated(
+          recommendations,
+          currentPage,
+          0, // totalPages
+          0, // totalItems
+          itemsPerPage,
+          { message: 'Recomendações recuperadas com sucesso' }
+        );
 
-        return reply.send({
-          success: true,
-          data: result,
-          message: 'Recommendations retrieved successfully',
-          errors: null,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        return reply.send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -184,45 +139,31 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
       tags: ['Investment Recommendations'],
       security: [{ bearerAuth: [] }],
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: z.object({
-            recommendations: z.array(recommendationResponseSchema)
-          })
-        }),
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(z.object({
+          recommendations: z.array(recommendationResponseSchema)
+        })),
+        401: standardError401Schema,
+        500: standardError500Schema
       },
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const userId = authRequest.user.id;
+        const userId = request.user.id;
 
         // TODO: Implement GetActiveInvestmentRecommendationsUseCase
         const result = { recommendations: [] };
 
-        return reply.send({
-          success: true,
-          data: result,
-          message: 'Active recommendations retrieved successfully',
-          errors: null,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.success(
+          result,
+          { message: 'Recomendações ativas recuperadas com sucesso' }
+        );
+        
+        return reply.send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -238,43 +179,25 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
       security: [{ bearerAuth: [] }],
       params: investmentRecommendationParamsSchema,
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: recommendationResponseSchema
-        }),
-        404: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(recommendationResponseSchema),
+        404: standardError404Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       },
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = authRequest.params as any;
-        const userId = authRequest.user.id;
+        const { id } = request.params as any;
+        const userId = request.user.id;
 
         // TODO: Implement GetInvestmentRecommendationByIdUseCase
-        return reply.status(404).send({
-          success: false,
-          data: null,
-          message: 'Recommendation not found',
-          errors: ['RECOMMENDATION_NOT_FOUND'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.notFound('Recomendação');
+        return reply.status(404).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -291,44 +214,26 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
       params: investmentRecommendationParamsSchema,
       body: updateInvestmentRecommendationSchema,
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: recommendationResponseSchema
-        }),
-        404: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(recommendationResponseSchema),
+        404: standardError404Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       },
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = authRequest.params as any;
-        const userId = authRequest.user.id;
-        const body = authRequest.body as any;
+        const { id } = request.params as any;
+        const userId = request.user.id;
+        const body = request.body;
 
         // TODO: Implement UpdateInvestmentRecommendationUseCase
-        return reply.status(404).send({
-          success: false,
-          data: null,
-          message: 'Recommendation not found',
-          errors: ['RECOMMENDATION_NOT_FOUND'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.notFound('Recomendação');
+        return reply.status(404).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -344,43 +249,25 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
       security: [{ bearerAuth: [] }],
       params: investmentRecommendationParamsSchema,
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: recommendationResponseSchema
-        }),
-        404: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(recommendationResponseSchema),
+        404: standardError404Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       },
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = authRequest.params as any;
-        const userId = authRequest.user.id;
+        const { id } = request.params as any;
+        const userId = request.user.id;
 
         // TODO: Implement ToggleInvestmentRecommendationUseCase
-        return reply.status(404).send({
-          success: false,
-          data: null,
-          message: 'Recommendation not found',
-          errors: ['RECOMMENDATION_NOT_FOUND'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.notFound('Recomendação');
+        return reply.status(404).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });

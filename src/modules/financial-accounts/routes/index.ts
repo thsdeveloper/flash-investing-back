@@ -5,6 +5,15 @@ import { DomainError } from '@src/modules/shared/domain/errors/domain-error';
 import { authMiddleware } from '@src/modules/shared/infrastructure/middlewares/auth-middleware';
 import { AuthenticatedRequest } from '@src/modules/shared/types/authenticated-request';
 import { prisma } from '@src/infrastructure/database/prisma-client';
+import { 
+  standardSuccessResponseSchema,
+  standardPaginatedResponseSchema,
+  standardError400Schema,
+  standardError401Schema,
+  standardError404Schema,
+  standardError500Schema
+} from '@src/modules/shared/schemas/common';
+import { ResponseHelper } from '@src/modules/shared/utils/response-helper';
 import {
   PrismaFinancialAccountRepository
 } from "@src/modules/financial-accounts/infrastructure/repositories/prisma-financial-account-repository";
@@ -23,6 +32,12 @@ import {
 import {
   DeleteFinancialAccountUseCase
 } from "@src/modules/financial-accounts/application/use-cases/delete-financial-account";
+import {
+  financialAccountResponseSchema,
+  createFinancialAccountSchema,
+  updateFinancialAccountSchema,
+  financialAccountQuerySchema
+} from "@src/modules/financial-accounts/schemas/financial-account";
 
 const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
   const financialAccountRepository = new PrismaFinancialAccountRepository(prisma);
@@ -31,51 +46,47 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
   fastify.withTypeProvider<ZodTypeProvider>().route({
     method: 'GET',
     url: '/',
+    preHandler: authMiddleware,
     schema: {
       description: 'Listar contas financeiras do usuário',
       tags: ['Financial Accounts'],
+      security: [{ bearerAuth: [] }],
+      querystring: financialAccountQuerySchema,
       response: {
-        200: z.object({
-          data: z.array(z.object({
-            id: z.string().uuid().describe('ID único da conta financeira'),
-            nome: z.string().describe('Nome da conta financeira'),
-            tipo: z.enum(['conta_corrente', 'conta_poupanca', 'carteira', 'investimento', 'outras']).describe('Tipo da conta financeira'),
-            instituicao: z.string().nullable().optional().describe('Instituição financeira'),
-            saldo_inicial: z.number().describe('Saldo inicial da conta'),
-            saldo_atual: z.number().describe('Saldo atual da conta'),
-            cor: z.string().nullable().optional().describe('Cor da conta em hexadecimal'),
-            icone: z.string().nullable().optional().describe('Ícone da conta'),
-            ativa: z.boolean().describe('Se a conta está ativa'),
-            observacoes: z.string().nullable().optional().describe('Observações sobre a conta'),
-            user: z.string().uuid().describe('ID do usuário proprietário'),
-            date_created: z.string().datetime().describe('Data de criação'),
-            date_updated: z.string().datetime().describe('Data de atualização')
-          })),
-          meta: z.object({
-            total_count: z.number().describe('Total de registros'),
-            filter_count: z.number().describe('Registros após filtros')
-          })
-        }).describe('Lista de contas financeiras'),
-        401: z.object({
-          error: z.string().describe('Mensagem de erro'),
-        }).describe('Não autorizado'),
+        200: standardPaginatedResponseSchema(financialAccountResponseSchema),
+        401: standardError401Schema,
+        500: standardError500Schema
       }
     },
-    preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
         const getAccountsUseCase = new GetFinancialAccountsUseCase(financialAccountRepository);
         const result = await getAccountsUseCase.execute({
-          userId: (request as any).user.id,
+          userId: (request as AuthenticatedRequest).user.id,
           // Sem filtros - retorna todas as contas do usuário
         });
         
-        return result;
+        const response = ResponseHelper.successPaginated(
+          result.data,
+          1, // current page - implementar paginação futuramente
+          1, // total pages
+          result.meta.total_count,
+          result.meta.filter_count,
+          { message: 'Contas financeiras recuperadas com sucesso' }
+        );
+        
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
-          return reply.status(400).send({ error: error.message });
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response as any);
         }
-        throw error;
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response as any);
       }
     },
   });
@@ -84,49 +95,50 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
   fastify.withTypeProvider<ZodTypeProvider>().route({
     method: 'GET',
     url: '/:id',
+    preHandler: authMiddleware,
     schema: {
       description: 'Buscar conta financeira por ID',
       tags: ['Financial Accounts'],
+      security: [{ bearerAuth: [] }],
       params: z.object({
         id: z.string().uuid().describe('ID da conta financeira'),
       }),
       response: {
-        200: z.object({
-          id: z.string().uuid().describe('ID único da conta financeira'),
-          nome: z.string().describe('Nome da conta financeira'),
-          tipo: z.enum(['conta_corrente', 'conta_poupanca', 'carteira', 'investimento', 'outras']).describe('Tipo da conta financeira'),
-          instituicao: z.string().nullable().optional().describe('Instituição financeira'),
-          saldo_inicial: z.number().describe('Saldo inicial da conta'),
-          saldo_atual: z.number().describe('Saldo atual da conta'),
-          cor: z.string().nullable().optional().describe('Cor da conta em hexadecimal'),
-          icone: z.string().nullable().optional().describe('Ícone da conta'),
-          ativa: z.boolean().describe('Se a conta está ativa'),
-          observacoes: z.string().nullable().optional().describe('Observações sobre a conta'),
-          user: z.string().uuid().describe('ID do usuário proprietário'),
-          date_created: z.string().datetime().describe('Data de criação'),
-          date_updated: z.string().datetime().describe('Data de atualização'),
-        }).describe('Conta financeira encontrada'),
-        404: z.object({
-          error: z.string().describe('Mensagem de erro'),
-        }).describe('Conta não encontrada'),
-        401: z.object({
-          error: z.string().describe('Mensagem de erro'),
-        }).describe('Não autorizado'),
-      },
+        200: standardSuccessResponseSchema(financialAccountResponseSchema),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        404: standardError404Schema,
+        500: standardError500Schema
+      }
     },
-    preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
         const getAccountUseCase = new GetFinancialAccountByIdUseCase(financialAccountRepository);
-        const result = await getAccountUseCase.execute((request.params as any).id, (request as any).user.id);
+        const { id } = request.params as { id: string };
+        const result = await getAccountUseCase.execute(id, (request as AuthenticatedRequest).user.id);
         
-        return result;
+        const response = ResponseHelper.success(
+          result,
+          { message: 'Conta financeira recuperada com sucesso' }
+        );
+        
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
-          const statusCode = error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND' ? 404 : 400;
-          return reply.status(statusCode).send({ error: error.message });
+          if (error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND') {
+            const response = ResponseHelper.notFound('Conta financeira');
+            return reply.status(404).send(response as any);
+          }
+          
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response as any);
         }
-        throw error;
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response as any);
       }
     },
   });
@@ -135,43 +147,19 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
   fastify.withTypeProvider<ZodTypeProvider>().route({
     method: 'POST',
     url: '/',
+    preHandler: authMiddleware,
     schema: {
       description: 'Criar nova conta financeira',
       tags: ['Financial Accounts'],
-      body: z.object({
-        nome: z.string().min(1).max(255).describe('Nome da conta financeira'),
-        tipo: z.enum(['conta_corrente', 'conta_poupanca', 'carteira', 'investimento', 'outras']).describe('Tipo da conta financeira'),
-        instituicao: z.string().max(255).optional().describe('Instituição financeira'),
-        saldo_inicial: z.number().default(0).describe('Saldo inicial da conta'),
-        cor: z.string().max(7).optional().describe('Cor da conta em hexadecimal'),
-        icone: z.string().max(50).optional().describe('Ícone da conta'),
-        observacoes: z.string().max(1000).optional().describe('Observações sobre a conta'),
-      }),
+      security: [{ bearerAuth: [] }],
+      body: createFinancialAccountSchema,
       response: {
-        201: z.object({
-          id: z.string().uuid().describe('ID único da conta financeira'),
-          nome: z.string().describe('Nome da conta financeira'),
-          tipo: z.enum(['conta_corrente', 'conta_poupanca', 'carteira', 'investimento', 'outras']).describe('Tipo da conta financeira'),
-          instituicao: z.string().nullable().optional().describe('Instituição financeira'),
-          saldo_inicial: z.number().describe('Saldo inicial da conta'),
-          saldo_atual: z.number().describe('Saldo atual da conta'),
-          cor: z.string().nullable().optional().describe('Cor da conta em hexadecimal'),
-          icone: z.string().nullable().optional().describe('Ícone da conta'),
-          ativa: z.boolean().describe('Se a conta está ativa'),
-          observacoes: z.string().nullable().optional().describe('Observações sobre a conta'),
-          user: z.string().uuid().describe('ID do usuário proprietário'),
-          date_created: z.string().datetime().describe('Data de criação'),
-          date_updated: z.string().datetime().describe('Data de atualização'),
-        }).describe('Conta financeira criada com sucesso'),
-        400: z.object({
-          error: z.string().describe('Mensagem de erro'),
-        }).describe('Erro de validação'),
-        401: z.object({
-          error: z.string().describe('Mensagem de erro'),
-        }).describe('Não autorizado'),
-      },
+        201: standardSuccessResponseSchema(financialAccountResponseSchema),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
+      }
     },
-    preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
         const body = request.body as any;
@@ -184,15 +172,26 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           cor: body.cor,
           icone: body.icone,
           observacoes: body.observacoes,
-          userId: (request as any).user.id,
+          userId: (request as AuthenticatedRequest).user.id,
         });
         
-        return reply.status(201).send(result);
+        const response = ResponseHelper.success(
+          result,
+          { message: 'Conta financeira criada com sucesso' }
+        );
+        
+        return reply.status(201).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
-          return reply.status(400).send({ error: error.message });
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response as any);
         }
-        throw error;
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response as any);
       }
     },
   });
@@ -201,57 +200,30 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
   fastify.withTypeProvider<ZodTypeProvider>().route({
     method: 'PATCH',
     url: '/:id',
+    preHandler: authMiddleware,
     schema: {
       description: 'Atualizar conta financeira',
       tags: ['Financial Accounts'],
+      security: [{ bearerAuth: [] }],
       params: z.object({
         id: z.string().uuid().describe('ID da conta financeira'),
       }),
-      body: z.object({
-        nome: z.string().min(1).max(255).optional().describe('Nome da conta financeira'),
-        tipo: z.enum(['conta_corrente', 'conta_poupanca', 'carteira', 'investimento', 'outras']).optional().describe('Tipo da conta financeira'),
-        instituicao: z.string().max(255).optional().describe('Instituição financeira'),
-        saldo_inicial: z.number().optional().describe('Saldo inicial da conta'),
-        saldo_atual: z.number().optional().describe('Saldo atual da conta'),
-        cor: z.string().max(7).optional().describe('Cor da conta em hexadecimal'),
-        icone: z.string().max(50).optional().describe('Ícone da conta'),
-        ativa: z.boolean().optional().describe('Se a conta está ativa'),
-        observacoes: z.string().max(1000).optional().describe('Observações sobre a conta'),
-      }),
+      body: updateFinancialAccountSchema,
       response: {
-        200: z.object({
-          id: z.string().uuid().describe('ID único da conta financeira'),
-          nome: z.string().describe('Nome da conta financeira'),
-          tipo: z.enum(['conta_corrente', 'conta_poupanca', 'carteira', 'investimento', 'outras']).describe('Tipo da conta financeira'),
-          instituicao: z.string().nullable().optional().describe('Instituição financeira'),
-          saldo_inicial: z.number().describe('Saldo inicial da conta'),
-          saldo_atual: z.number().describe('Saldo atual da conta'),
-          cor: z.string().nullable().optional().describe('Cor da conta em hexadecimal'),
-          icone: z.string().nullable().optional().describe('Ícone da conta'),
-          ativa: z.boolean().describe('Se a conta está ativa'),
-          observacoes: z.string().nullable().optional().describe('Observações sobre a conta'),
-          user: z.string().uuid().describe('ID do usuário proprietário'),
-          date_created: z.string().datetime().describe('Data de criação'),
-          date_updated: z.string().datetime().describe('Data de atualização'),
-        }).describe('Conta financeira atualizada com sucesso'),
-        404: z.object({
-          error: z.string().describe('Mensagem de erro'),
-        }).describe('Conta não encontrada'),
-        400: z.object({
-          error: z.string().describe('Mensagem de erro'),
-        }).describe('Erro de validação'),
-        401: z.object({
-          error: z.string().describe('Mensagem de erro'),
-        }).describe('Não autorizado'),
-      },
+        200: standardSuccessResponseSchema(financialAccountResponseSchema),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        404: standardError404Schema,
+        500: standardError500Schema
+      }
     },
-    preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
         const body = request.body as any;
+        const { id } = request.params as { id: string };
         const updateAccountUseCase = new UpdateFinancialAccountUseCase(financialAccountRepository);
         const result = await updateAccountUseCase.execute(
-          (request.params as any).id,
+          id,
           {
             nome: body.nome,
             tipo: body.tipo,
@@ -263,16 +235,31 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
             ativa: body.ativa,
             observacoes: body.observacoes,
           },
-          (request as any).user.id
+          (request as AuthenticatedRequest).user.id
         );
         
-        return result;
+        const response = ResponseHelper.success(
+          result,
+          { message: 'Conta financeira atualizada com sucesso' }
+        );
+        
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
-          const statusCode = error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND' ? 404 : 400;
-          return reply.status(statusCode).send({ error: error.message });
+          if (error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND') {
+            const response = ResponseHelper.notFound('Conta financeira');
+            return reply.status(404).send(response as any);
+          }
+          
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response as any);
         }
-        throw error;
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response as any);
       }
     },
   });
@@ -281,9 +268,11 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
   fastify.withTypeProvider<ZodTypeProvider>().route({
     method: 'DELETE',
     url: '/:id',
+    preHandler: authMiddleware,
     schema: {
       description: 'Deletar conta financeira (soft delete)',
       tags: ['Financial Accounts'],
+      security: [{ bearerAuth: [] }],
       params: z.object({
         id: z.string().uuid().describe('ID da conta financeira'),
       }),
@@ -291,33 +280,46 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
         hard: z.enum(['true', 'false']).optional().describe('Hard delete (permanente)'),
       }),
       response: {
-        204: z.void().describe('Conta financeira deletada com sucesso'),
-        404: z.object({
-          error: z.string().describe('Mensagem de erro'),
-        }).describe('Conta não encontrada'),
-        401: z.object({
-          error: z.string().describe('Mensagem de erro'),
-        }).describe('Não autorizado'),
-      },
+        200: standardSuccessResponseSchema(z.null()),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        404: standardError404Schema,
+        500: standardError500Schema
+      }
     },
-    preHandler: authMiddleware,
     handler: async (request, reply) => {
       try {
         const query = request.query as any;
+        const { id } = request.params as { id: string };
         const deleteAccountUseCase = new DeleteFinancialAccountUseCase(financialAccountRepository);
         await deleteAccountUseCase.execute(
-          (request.params as any).id,
-          (request as any).user.id,
+          id,
+          (request as AuthenticatedRequest).user.id,
           query.hard !== 'true' // Se hard=true, softDelete=false
         );
         
-        return reply.status(204).send();
+        const response = ResponseHelper.success(
+          null,
+          { message: 'Conta financeira removida com sucesso' }
+        );
+        
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
-          const statusCode = error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND' ? 404 : 400;
-          return reply.status(statusCode).send({ error: error.message });
+          if (error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND') {
+            const response = ResponseHelper.notFound('Conta financeira');
+            return reply.status(404).send(response as any);
+          }
+          
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response as any);
         }
-        throw error;
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response as any);
       }
     },
   });

@@ -22,7 +22,18 @@ import {
   transactionQuerySchema,
   transactionResponseSchema, updateTransactionSchema
 } from "@src/modules/transactions/schemas/transaction";
-import {errorResponseSchema} from "@src/modules/shared/schemas/common";
+import { 
+  standardSuccessResponseSchema,
+  standardPaginatedResponseSchema,
+  standardError400Schema,
+  standardError401Schema,
+  standardError404Schema,
+  standardError422Schema,
+  standardError500Schema
+} from '@src/modules/shared/schemas/common';
+import { ResponseHelper } from '@src/modules/shared/utils/response-helper';
+import { DomainError } from '@src/modules/shared/domain/errors/domain-error';
+import { AuthenticatedRequest } from '@src/modules/shared/types/authenticated-request';
 
 const transactionRoutes: FastifyPluginAsync = async function (fastify) {
   // Repositórios
@@ -83,8 +94,10 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       tags: ['Transactions'],
       body: createTransactionSchema,
       response: {
-        201: transactionResponseSchema,
-        400: errorResponseSchema
+        201: standardSuccessResponseSchema(transactionResponseSchema),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       }
     },
     preHandler: [
@@ -104,14 +117,26 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
         
         const transaction = await createTransactionUseCase.execute({
           ...requestBody,
-          userId: (request as any).user.id
+          userId: (request as AuthenticatedRequest).user.id
         });
 
-        return reply.status(201).send(transaction);
+        const response = ResponseHelper.success(
+          transaction,
+          { message: 'Transação criada com sucesso' }
+        );
+        
+        return reply.status(201).send(response);
       } catch (error) {
-        return reply.status(400).send({ 
-          error: error instanceof Error ? error.message : 'Erro ao criar transação' 
-        });
+        if (error instanceof DomainError) {
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response);
+        }
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -125,8 +150,9 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       tags: ['Transactions'],
       querystring: transactionQuerySchema,
       response: {
-        200: transactionListResponseSchema,
-        500: errorResponseSchema
+        200: standardPaginatedResponseSchema(transactionResponseSchema),
+        401: standardError401Schema,
+        500: standardError500Schema
       }
     },
     preHandler: authMiddleware,
@@ -136,13 +162,13 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
 
         let transactions;
         if (contaFinanceiraId) {
-          transactions = await transactionRepository.findByUserIdAndAccountId((request as any).user.id, contaFinanceiraId);
+          transactions = await transactionRepository.findByUserIdAndAccountId((request as AuthenticatedRequest).user.id, contaFinanceiraId);
         } else if (categoria) {
-          transactions = await transactionRepository.findByUserIdAndCategory((request as any).user.id, categoria);
+          transactions = await transactionRepository.findByUserIdAndCategory((request as AuthenticatedRequest).user.id, categoria);
         } else if (startDate && endDate) {
-          transactions = await transactionRepository.findByUserIdAndDateRange((request as any).user.id, startDate, endDate);
+          transactions = await transactionRepository.findByUserIdAndDateRange((request as AuthenticatedRequest).user.id, startDate, endDate);
         } else {
-          transactions = await transactionRepository.findByUserId((request as any).user.id);
+          transactions = await transactionRepository.findByUserId((request as AuthenticatedRequest).user.id);
         }
 
         // Filtrar por tipo se especificado
@@ -152,15 +178,18 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
 
         // Aplicar paginação
         const total = transactions.length;
-        const paginatedTransactions = transactions.slice(offset || 0, (offset || 0) + (limit || 20));
+        const itemsPerPage = limit || 20;
+        const currentPage = Math.floor((offset || 0) / itemsPerPage) + 1;
+        const totalPages = Math.ceil(total / itemsPerPage);
+        const paginatedTransactions = transactions.slice(offset || 0, (offset || 0) + itemsPerPage);
 
         // Calcular resumo
         const receitas = transactions.filter(t => t.isReceita()).reduce((sum, t) => sum + t.getValor(), 0);
         const despesas = transactions.filter(t => t.isDespesa()).reduce((sum, t) => sum + t.getValor(), 0);
         const saldo = receitas - despesas;
 
-        const response = {
-          transactions: paginatedTransactions.map(t => ({
+        const transactionData = {
+          items: paginatedTransactions.map(t => ({
             id: t.getId()!,
             descricao: t.getDescricao(),
             valor: t.getValor(),
@@ -175,20 +204,27 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
             createdAt: t.getCreatedAt().toISOString(),
             updatedAt: t.getUpdatedAt().toISOString()
           })),
-          total,
-          totalValue: receitas + despesas,
           summary: {
             receitas,
             despesas,
-            saldo
+            saldo,
+            totalValue: receitas + despesas
           }
         };
 
-        return reply.send(response);
+        const response = ResponseHelper.successPaginated(
+          transactionData,
+          currentPage,
+          totalPages,
+          total,
+          itemsPerPage,
+          { message: 'Transações recuperadas com sucesso' }
+        );
+
+        return reply.status(200).send(response);
       } catch (error) {
-        return reply.status(500).send({ 
-          error: error instanceof Error ? error.message : 'Erro ao buscar transações' 
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -202,8 +238,10 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       tags: ['Transactions'],
       params: transactionParamsSchema,
       response: {
-        200: transactionResponseSchema,
-        404: errorResponseSchema
+        200: standardSuccessResponseSchema(transactionResponseSchema),
+        401: standardError401Schema,
+        404: standardError404Schema,
+        500: standardError500Schema
       }
     },
     preHandler: authMiddleware,
@@ -212,11 +250,12 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
         const { id } = (request.params as any);
         const transaction = await transactionRepository.findById(id);
 
-        if (!transaction || !transaction.belongsToUser((request as any).user.id)) {
-          return reply.status(404).send({ error: 'Transação não encontrada' });
+        if (!transaction || !transaction.belongsToUser((request as AuthenticatedRequest).user.id)) {
+          const response = ResponseHelper.notFound('Transação');
+          return reply.status(404).send(response);
         }
 
-        const response = {
+        const transactionData = {
           id: transaction.getId()!,
           descricao: transaction.getDescricao(),
           valor: transaction.getValor(),
@@ -232,11 +271,15 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           updatedAt: transaction.getUpdatedAt().toISOString()
         };
 
-        return reply.send(response);
+        const response = ResponseHelper.success(
+          transactionData,
+          { message: 'Transação recuperada com sucesso' }
+        );
+
+        return reply.status(200).send(response);
       } catch (error) {
-        return reply.status(500).send({ 
-          error: error instanceof Error ? error.message : 'Erro ao buscar transação' 
-        });
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -251,8 +294,11 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       params: transactionParamsSchema,
       body: updateTransactionSchema,
       response: {
-        200: transactionResponseSchema,
-        400: errorResponseSchema
+        200: standardSuccessResponseSchema(transactionResponseSchema),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        404: standardError404Schema,
+        500: standardError500Schema
       }
     },
     preHandler: authMiddleware,
@@ -262,14 +308,31 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
         const transaction = await updateTransactionUseCase.execute({
           id,
           ...request.body,
-          userId: (request as any).user.id
+          userId: (request as AuthenticatedRequest).user.id
         });
 
-        return reply.send(transaction);
+        const response = ResponseHelper.success(
+          transaction,
+          { message: 'Transação atualizada com sucesso' }
+        );
+
+        return reply.status(200).send(response);
       } catch (error) {
-        return reply.status(400).send({ 
-          error: error instanceof Error ? error.message : 'Erro ao atualizar transação' 
-        });
+        if (error instanceof DomainError) {
+          if (error.code === 'TRANSACTION_NOT_FOUND') {
+            const response = ResponseHelper.notFound('Transação');
+            return reply.status(404).send(response);
+          }
+          
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response);
+        }
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -284,8 +347,11 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       params: transactionParamsSchema,
       body: patchTransactionSchema,
       response: {
-        200: transactionResponseSchema,
-        400: errorResponseSchema
+        200: standardSuccessResponseSchema(transactionResponseSchema),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        404: standardError404Schema,
+        500: standardError500Schema
       }
     },
     preHandler: authMiddleware,
@@ -296,9 +362,11 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
         
         // Validar que pelo menos um campo foi fornecido
         if (Object.keys(requestBody).length === 0) {
-          return reply.status(400).send({
-            error: 'Pelo menos um campo deve ser fornecido para atualização'
-          });
+          const response = ResponseHelper.error(
+            'Pelo menos um campo deve ser fornecido para atualização',
+            ['MISSING_FIELDS']
+          );
+          return reply.status(400).send(response);
         }
         
         // Se categoria for um UUID, mapear para categoriaId
@@ -312,14 +380,31 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
         const transaction = await patchTransactionUseCase.execute({
           id,
           ...requestBody,
-          userId: (request as any).user.id
+          userId: (request as AuthenticatedRequest).user.id
         });
 
-        return reply.send(transaction);
+        const response = ResponseHelper.success(
+          transaction,
+          { message: 'Transação atualizada parcialmente com sucesso' }
+        );
+        
+        return reply.status(200).send(response);
       } catch (error) {
-        return reply.status(400).send({ 
-          error: error instanceof Error ? error.message : 'Erro ao atualizar transação' 
-        });
+        if (error instanceof DomainError) {
+          if (error.code === 'TRANSACTION_NOT_FOUND') {
+            const response = ResponseHelper.notFound('Transação');
+            return reply.status(404).send(response);
+          }
+          
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response);
+        }
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -333,8 +418,11 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       tags: ['Transactions'],
       params: transactionParamsSchema,
       response: {
-        204: z.null(),
-        400: errorResponseSchema
+        200: standardSuccessResponseSchema(z.null()),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        404: standardError404Schema,
+        500: standardError500Schema
       }
     },
     preHandler: authMiddleware,
@@ -343,14 +431,31 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
         const { id } = (request.params as any);
         await deleteTransactionUseCase.execute({
           id,
-          userId: (request as any).user.id
+          userId: (request as AuthenticatedRequest).user.id
         });
 
-        return reply.status(204).send();
+        const response = ResponseHelper.success(
+          null,
+          { message: 'Transação deletada com sucesso' }
+        );
+        
+        return reply.status(200).send(response);
       } catch (error) {
-        return reply.status(400).send({ 
-          error: error instanceof Error ? error.message : 'Erro ao deletar transação' 
-        });
+        if (error instanceof DomainError) {
+          if (error.code === 'TRANSACTION_NOT_FOUND') {
+            const response = ResponseHelper.notFound('Transação');
+            return reply.status(404).send(response);
+          }
+          
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response);
+        }
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -364,8 +469,11 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       tags: ['Transactions'],
       params: transactionParamsSchema,
       response: {
-        200: transactionResponseSchema,
-        400: errorResponseSchema
+        200: standardSuccessResponseSchema(transactionResponseSchema),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        404: standardError404Schema,
+        500: standardError500Schema
       }
     },
     preHandler: authMiddleware,
@@ -374,14 +482,31 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
         const { id } = (request.params as any);
         const transaction = await completeTransactionUseCase.execute({
           id,
-          userId: (request as any).user.id
+          userId: (request as AuthenticatedRequest).user.id
         });
 
-        return reply.send(transaction);
+        const response = ResponseHelper.success(
+          transaction,
+          { message: 'Transação marcada como efetuada com sucesso' }
+        );
+        
+        return reply.status(200).send(response);
       } catch (error) {
-        return reply.status(400).send({ 
-          error: error instanceof Error ? error.message : 'Erro ao marcar transação como efetuada' 
-        });
+        if (error instanceof DomainError) {
+          if (error.code === 'TRANSACTION_NOT_FOUND') {
+            const response = ResponseHelper.notFound('Transação');
+            return reply.status(404).send(response);
+          }
+          
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response);
+        }
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });
@@ -395,8 +520,9 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
       tags: ['Transactions'],
       querystring: budgetQuerySchema,
       response: {
-        200: budgetResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(budgetResponseSchema),
+        401: standardError401Schema,
+        500: standardError500Schema
       }
     },
     preHandler: authMiddleware,
@@ -405,16 +531,28 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
         const { startDate, endDate } = (request.query as any);
         
         const budget = await getUserBudgetUseCase.execute({
-          userId: (request as any).user.id,
+          userId: (request as AuthenticatedRequest).user.id,
           startDate,
           endDate
         });
 
-        return reply.send(budget);
+        const response = ResponseHelper.success(
+          budget,
+          { message: 'Orçamento recuperado com sucesso' }
+        );
+        
+        return reply.status(200).send(response);
       } catch (error) {
-        return reply.status(500).send({ 
-          error: error instanceof Error ? error.message : 'Erro ao buscar orçamento' 
-        });
+        if (error instanceof DomainError) {
+          const response = ResponseHelper.error(
+            error.message,
+            [error.code || 'DOMAIN_ERROR']
+          );
+          return reply.status(400).send(response);
+        }
+        
+        const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
+        return reply.status(500).send(response);
       }
     }
   });

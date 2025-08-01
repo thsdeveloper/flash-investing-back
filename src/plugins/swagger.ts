@@ -9,19 +9,20 @@ import {
 } from 'fastify-type-provider-zod';
 
 export default fp(async function (fastify) {
-  // Set up type provider
+  // Configurar provedor de tipos
   fastify.setValidatorCompiler(validatorCompiler);
   fastify.setSerializerCompiler(serializerCompiler);
 
-  // Register Swagger
+  // Registrar Swagger
   await fastify.register(fastifySwagger as any, {
     openapi: {
       openapi: '3.0.0',
       info: {
         title: 'Flash Investing API',
+        description: 'API completa para gestão financeira pessoal, investimentos e controle de orçamento',
         version: '1.0.0',
         contact: {
-          name: 'Flash Investing API Support',
+          name: 'Suporte Flash Investing API',
           email: 'support@flashinvesting.com',
           url: 'https://flashinvesting.com/support'
         },
@@ -34,103 +35,99 @@ export default fp(async function (fastify) {
       servers: [
         {
           url: `http://localhost:${env.PORT}`,
-          description: 'Development server'
+          description: 'Servidor de desenvolvimento'
         },
         {
           url: 'https://api.flashinvesting.com',
-          description: 'Production server'
+          description: 'Servidor de produção'
         },
         {
           url: 'https://staging-api.flashinvesting.com',  
-          description: 'Staging server'
+          description: 'Servidor de homologação'
         }
       ],
       tags: [
         {
           name: 'Authentication',
-          description: '🔐 User authentication, registration, and JWT token management',
-          'x-displayName': '🔐 Authentication'
+          description: '🔐 Autenticação de usuários, registro e gerenciamento de tokens JWT',
+          'x-displayName': '🔐 Autenticação'
         },
         {
           name: 'Users',
-          description: '👤 User profile management and settings',
-          'x-displayName': '👤 Users'
+          description: '👤 Gerenciamento de perfil do usuário e configurações',
+          'x-displayName': '👤 Usuários'
         },
         {
           name: 'Financial Accounts',
-          description: '🏦 Bank accounts, wallets, and investment account management',
-          'x-displayName': '🏦 Financial Accounts'
+          description: '🏦 Gerenciamento de contas bancárias, carteiras e contas de investimento',
+          'x-displayName': '🏦 Contas'
         },
         {
           name: 'Transactions',
-          description: '💸 Income, expense, and transfer transaction management',
-          'x-displayName': '💸 Transactions'
+          description: '💸 Gerenciamento de transações de receita, despesa e transferência',
+          'x-displayName': '💸 Transações'
         },
         {
           name: 'Financial Categories',
-          description: '📂 Transaction categorization and budget rules (50/30/20)',
-          'x-displayName': '📂 Financial Categories'
+          description: '📂 Categorização de transações e regras de orçamento (50/30/20)',
+          'x-displayName': '📂 Categorias'
         },
         {
           name: 'Credit Cards',
-          description: '💳 Credit card management and invoice tracking',
-          'x-displayName': '💳 Credit Cards'
+          description: '💳 Gerenciamento de cartões de crédito e rastreamento de faturas',
+          'x-displayName': '💳 Cartões de Crédito'
         },
         {
           name: 'Credit Card Transactions',
-          description: '🛒 Credit card purchases and payment tracking',
-          'x-displayName': '🛒 Credit Card Transactions'
+          description: '🛒 Compras com cartão de crédito e rastreamento de pagamentos',
+          'x-displayName': '🛒 Transações de Cartão'
         },
         {
           name: 'Investment Portfolios',
-          description: '📊 Investment portfolio creation and management',
-          'x-displayName': '📊 Investment Portfolios'
+          description: '📊 Criação e gerenciamento de portfólios de investimento',
+          'x-displayName': '📊 Portfólios'
         },
         {
           name: 'Investment Assets',
-          description: '💰 Stock, bond, ETF, and crypto asset management',
-          'x-displayName': '💰 Investment Assets'
+          description: '💰 Gerenciamento de ações, títulos, ETFs e criptomoedas',
+          'x-displayName': '💰 Ativos'
         },
         {
           name: 'Investment Recommendations',
-          description: '🎯 AI-powered investment recommendations and analysis',
-          'x-displayName': '🎯 Investment Recommendations'
+          description: '🎯 Recomendações de investimento e análises com IA',
+          'x-displayName': '🎯 Recomendações'
         },
         {
           name: 'Debt Management',
-          description: '📋 Debt tracking, payment plans, and negotiation management',
-          'x-displayName': '📋 Debt Management'
+          description: '📋 Rastreamento de dívidas, planos de pagamento e gerenciamento de negociações',
+          'x-displayName': '📋 Dívidas'
         },
         {
           name: 'Budget & Finance Settings',
-          description: '⚙️ User budget configuration and financial planning',
-          'x-displayName': '⚙️ Budget & Finance Settings'
+          description: '⚙️ Configuração de orçamento do usuário e planejamento financeiro',
+          'x-displayName': '⚙️ Configurações de Orçamento'
         },
         {
           name: 'External Integrations',
-          description: '🔗 Bank integrations via Pluggy/Belvo APIs',
-          'x-displayName': '🔗 External Integrations'
+          description: '🔗 Integrações bancárias via APIs Pluggy/Belvo',
+          'x-displayName': '🔗 Integrações Externas'
         }
       ],
       'x-tagGroups': [
         {
-          name: '🔐 Core Authentication',
+          name: '🔐 Autenticação/Users',
           tags: ['Authentication', 'Users']
         },
         {
-          name: '💰 Financial Management',
-          tags: ['Financial Accounts', 'Transactions', 'Financial Categories', 'Budget & Finance Settings']
+          name: '💰 Gestão Financeira',
+          tags: ['Financial Accounts', 'Transactions', 'Financial Categories', 'Budget & Finance Settings', 'Credit Cards', 'Credit Card Transactions', 'Debt Management']
         },
         {
-          name: '💳 Credit & Debt',
-          tags: ['Credit Cards', 'Credit Card Transactions', 'Debt Management']
-        },
-        {
-          name: '📊 Investment & Portfolio',
+          name: '📊 Investimentos',
           tags: ['Investment Portfolios', 'Investment Assets', 'Investment Recommendations']
         },
         {
-          name: '🔗 External Services',
+          name: '🔗 Serviços Externos',
           tags: ['External Integrations']
         }
       ],
@@ -147,11 +144,11 @@ export default fp(async function (fastify) {
     transform: jsonSchemaTransform
   });
 
-  // Register Swagger UI
+  // Registrar Swagger UI
   await fastify.register(fastifySwaggerUi, {
     routePrefix: '/documentation',
     uiConfig: {
-      docExpansion: 'list', // Show tags expanded but operations collapsed
+      docExpansion: 'list', // Mostrar tags expandidas mas operações colapsadas
       deepLinking: true,
       persistAuthorization: true,
       displayRequestDuration: true,
@@ -162,17 +159,17 @@ export default fp(async function (fastify) {
       showExtensions: true,
       showCommonExtensions: true,
       filter: true,
-      // Professional customization
+      // Customização profissional
       defaultModelsExpandDepth: 2,
       defaultModelExpandDepth: 2,
       supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch']
     },
     staticCSP: true,
     transformSpecificationClone: true,
-    // Custom HTML title and favicon
+    // Título HTML customizado e favicon
     uiHooks: {
       onRequest: async (request, reply) => {
-        // Add custom headers for professional appearance
+        // Adiciona cabeçalhos customizados para aparência profissional
         reply.header('x-api-documentation', 'Flash Investing API v1.0.0');
       }
     }

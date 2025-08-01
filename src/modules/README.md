@@ -79,9 +79,14 @@ A documentação agora está organizada em grupos:
 - **🔐 Authentication**
   - Registro e login de usuários
 
-- **💳 Financial Management**
+- **💰 Financial Management**
+  - Contas financeiras
+  - Transações
+  - Categorias financeiras
+  - Cartões de crédito
   - Transações de cartão de crédito
   - Gestão de dívidas
+  - Configurações de orçamento
 
 ## 🚀 Como Adicionar um Novo Módulo
 
@@ -171,10 +176,13 @@ Todos os endpoints seguem o padrão de resposta unificado:
 - ✅ **Investments Module** - Completo
 - ✅ **Auth Module** - Migrado
 - ✅ **Debts Module** - Migrado  
-- 🔄 **Credit Cards Module** - Em progresso
-- ⏳ **Users Module** - Pendente
-- ⏳ **Transactions Module** - Pendente
-- ⏳ **Financial Accounts Module** - Pendente
+- ✅ **Credit Cards Module** - Migrado
+- ✅ **Users Module** - Migrado
+- ✅ **Transactions Module** - Migrado
+- ✅ **Financial Accounts Module** - Migrado
+- ✅ **Financial Categories Module** - Migrado
+- ✅ **User Finance Settings Module** - Migrado
+- ✅ **Pluggy Integration Module** - Migrado
 
 ## 🎛️ Swagger Configuration
 

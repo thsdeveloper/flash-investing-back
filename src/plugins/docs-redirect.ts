@@ -1,15 +1,15 @@
 import fp from 'fastify-plugin';
 
 export default fp(async function (fastify) {
-  // Main docs route - shows both documentation options
+  // Rota principal de documentação - mostra ambas as opções de documentação
   fastify.get('/', async (request, reply) => {
     const html = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flash Investing API - Documentation</title>
+    <title>Flash Investing API - Documentação</title>
     <style>
         * {
             margin: 0;
@@ -133,48 +133,59 @@ export default fp(async function (fastify) {
     
     <div class="container">
         <div class="logo">⚡ Flash Investing API</div>
-        <div class="subtitle">Professional API Documentation - Choose your preferred interface</div>
+        <div class="subtitle">Documentação Profissional da API - Escolha sua interface preferida</div>
         
         <div class="docs-grid">
             <a href="/scalar" class="doc-card">
                 <div class="doc-icon">🚀</div>
-                <div class="doc-title">Scalar Documentation</div>
+                <div class="doc-title">Documentação Scalar</div>
                 <div class="doc-description">
-                    Modern, beautiful API documentation with interactive testing, 
-                    dark theme, and enhanced user experience. Recommended for developers.
+                    Documentação de API moderna e bonita com testes interativos, 
+                    tema escuro e experiência de usuário aprimorada. Recomendado para desenvolvedores.
                 </div>
             </a>
             
             <a href="/documentation" class="doc-card">
                 <div class="doc-icon">📖</div>
-                <div class="doc-title">Swagger UI</div>
+                <div class="doc-title">Interface Swagger</div>
                 <div class="doc-description">
-                    Classic Swagger UI interface with comprehensive API exploration,
-                    schema validation, and tried-and-tested reliability.
+                    Interface clássica do Swagger UI com exploração abrangente da API,
+                    validação de esquemas e confiabilidade testada e aprovada.
+                </div>
+            </a>
+            
+            <a href="/errors" class="doc-card">
+                <div class="doc-icon">🚨</div>
+                <div class="doc-title">Códigos de Erro</div>
+                <div class="doc-description">
+                    Referência completa de todos os códigos de erro da API com 
+                    descrições detalhadas e códigos HTTP correspondentes.
                 </div>
             </a>
         </div>
         
         <div class="features">
-            <h3>🏦 API Features</h3>
+            <h3>🏦 Recursos da API</h3>
             <div class="features-grid">
-                <div class="feature">🔐 JWT Authentication</div>
-                <div class="feature">💰 Financial Management</div>
-                <div class="feature">💳 Credit Card Tracking</div>
-                <div class="feature">📊 Investment Portfolio</div>
-                <div class="feature">📋 Debt Management</div>
-                <div class="feature">🔗 Bank Integrations</div>
-                <div class="feature">⚙️ Budget Planning (50/30/20)</div>
-                <div class="feature">🎯 AI Recommendations</div>
+                <div class="feature">🔐 Autenticação JWT</div>
+                <div class="feature">💰 Gestão Financeira</div>
+                <div class="feature">💳 Rastreamento de Cartão</div>
+                <div class="feature">📊 Portfólio de Investimentos</div>
+                <div class="feature">📋 Gestão de Dívidas</div>
+                <div class="feature">🔗 Integrações Bancárias</div>
+                <div class="feature">⚙️ Planejamento Orçamentário (50/30/20)</div>
+                <div class="feature">🎯 Recomendações com IA</div>
             </div>
         </div>
         
         <div style="margin-top: 2rem; opacity: 0.7; font-size: 0.9rem;">
-            <p>Built with ❤️ using Fastify, TypeScript, and Clean Architecture</p>
+            <p>Construído com ❤️ usando Fastify, TypeScript e Clean Architecture</p>
             <p style="margin-top: 0.5rem;">
-                <a href="/scalar" style="color: rgba(255,255,255,0.8);">Scalar Docs</a> | 
-                <a href="/documentation" style="color: rgba(255,255,255,0.8);">Swagger UI</a> | 
-                <a href="/documentation/json" style="color: rgba(255,255,255,0.8);">OpenAPI Spec</a>
+                <a href="/scalar" style="color: rgba(255,255,255,0.8);">Docs Scalar</a> | 
+                <a href="/documentation" style="color: rgba(255,255,255,0.8);">Interface Swagger</a> | 
+                <a href="/errors" style="color: rgba(255,255,255,0.8);">Códigos de Erro</a> | 
+                <a href="/errors.json" style="color: rgba(255,255,255,0.8);">API de Erros</a> | 
+                <a href="/documentation/json" style="color: rgba(255,255,255,0.8);">Especificação OpenAPI</a>
             </p>
         </div>
     </div>

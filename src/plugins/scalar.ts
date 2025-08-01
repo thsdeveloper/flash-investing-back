@@ -1,6 +1,5 @@
 import fp from 'fastify-plugin';
 import scalarApiReference from '@scalar/fastify-api-reference';
-import { env } from '@src/infrastructure/config/env';
 
 export default fp(async function (fastify) {
   // Use the official Scalar plugin with custom configuration
@@ -9,6 +8,9 @@ export default fp(async function (fastify) {
     configuration: {
       theme: 'kepler',
       title: 'Flash Investing API',
+      sidebar: {
+        defaultOpenFolders: ['introduction'],
+      },
     }
   });
 

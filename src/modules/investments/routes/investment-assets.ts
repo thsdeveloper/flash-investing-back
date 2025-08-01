@@ -9,23 +9,16 @@ import {
   investmentAssetParamsSchema,
   investmentAssetQuerySchema,
 } from '../schemas/investment-asset';
+import { 
+  standardSuccessResponseSchema,
+  standardPaginatedResponseSchema,
+  standardError400Schema,
+  standardError401Schema,
+  standardError404Schema,
+  standardError500Schema
+} from '@src/modules/shared/schemas/common';
+import { ResponseHelper } from '@src/modules/shared/utils/response-helper';
 import { z } from 'zod';
-
-// Base response schema seguindo o padrão do módulo de dívidas
-const baseResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  errors: z.array(z.any()).nullable(),
-  meta: z.object({
-    timestamp: z.string(),
-    version: z.string()
-  })
-});
-
-const errorResponseSchema = baseResponseSchema.extend({
-  success: z.literal(false),
-  data: z.null()
-});
 
 // Asset response schema usando Zod
 const assetResponseSchema = z.object({
@@ -54,19 +47,15 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
       security: [{ bearerAuth: [] }],
       body: createInvestmentAssetSchema,
       response: {
-        201: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: assetResponseSchema
-        }),
-        400: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        201: standardSuccessResponseSchema(assetResponseSchema),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       },
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const body = authRequest.body as any;
+        const body = request.body;
 
         // TODO: Implement CreateInvestmentAssetUseCase
         const asset = {
@@ -76,27 +65,17 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
           updatedAt: new Date(),
         };
 
-        return reply.status(201).send({
-          success: true,
-          data: asset,
-          message: 'Investment asset created successfully',
-          errors: null,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.success(
+          asset,
+          { message: 'Ativo de investimento criado com sucesso' }
+        );
+        
+        return reply.status(201).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -112,59 +91,35 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
       security: [{ bearerAuth: [] }],
       querystring: investmentAssetQuerySchema,
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: z.object({
-            assets: z.array(assetResponseSchema),
-            pagination: z.object({
-              current_page: z.number(),
-              total_pages: z.number(),
-              total_items: z.number(),
-              items_per_page: z.number()
-            })
-          })
-        }),
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardPaginatedResponseSchema(assetResponseSchema),
+        401: standardError401Schema,
+        500: standardError500Schema
       },
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const query = authRequest.query as any;
+        const query = request.query;
 
         // TODO: Implement GetInvestmentAssetsUseCase
-        const result = {
-          assets: [],
-          pagination: {
-            current_page: query.page || 1,
-            total_pages: 0,
-            total_items: 0,
-            items_per_page: query.limit || 20
-          }
-        };
+        const assets: any[] = [];
+        const currentPage = query.page || 1;
+        const itemsPerPage = query.limit || 20;
+        
+        const response = ResponseHelper.successPaginated(
+          assets,
+          currentPage,
+          0, // totalPages
+          0, // totalItems
+          itemsPerPage,
+          { message: 'Ativos recuperados com sucesso' }
+        );
 
-        return reply.send({
-          success: true,
-          data: result,
-          message: 'Assets retrieved successfully',
-          errors: null,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        return reply.send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -180,42 +135,24 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
       security: [{ bearerAuth: [] }],
       params: investmentAssetParamsSchema,
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: assetResponseSchema
-        }),
-        404: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(assetResponseSchema),
+        404: standardError404Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       },
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = authRequest.params as any;
+        const { id } = request.params as any;
 
         // TODO: Implement GetInvestmentAssetByIdUseCase
-        return reply.status(404).send({
-          success: false,
-          data: null,
-          message: 'Asset not found',
-          errors: ['ASSET_NOT_FOUND'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.notFound('Ativo');
+        return reply.status(404).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -232,43 +169,25 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
       params: investmentAssetParamsSchema,
       body: updateInvestmentAssetSchema,
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: assetResponseSchema
-        }),
-        404: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(assetResponseSchema),
+        404: standardError404Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       },
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = authRequest.params as any;
-        const body = authRequest.body as any;
+        const { id } = request.params as any;
+        const body = request.body;
 
         // TODO: Implement UpdateInvestmentAssetUseCase
-        return reply.status(404).send({
-          success: false,
-          data: null,
-          message: 'Asset not found',
-          errors: ['ASSET_NOT_FOUND'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.notFound('Ativo');
+        return reply.status(404).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });

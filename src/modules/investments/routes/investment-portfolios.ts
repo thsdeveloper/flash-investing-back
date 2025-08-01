@@ -2,23 +2,16 @@ import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { authMiddleware } from '@src/modules/shared/infrastructure/middlewares/auth-middleware';
 import { AuthenticatedRequest } from '@src/modules/shared/types/authenticated-request';
+import { 
+  standardSuccessResponseSchema,
+  standardPaginatedResponseSchema,
+  standardError400Schema,
+  standardError401Schema,
+  standardError404Schema,
+  standardError500Schema
+} from '@src/modules/shared/schemas/common';
+import { ResponseHelper } from '@src/modules/shared/utils/response-helper';
 import { z } from 'zod';
-
-// Base response schema seguindo o padrão do módulo de dívidas
-const baseResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-  errors: z.array(z.any()).nullable(),
-  meta: z.object({
-    timestamp: z.string(),
-    version: z.string()
-  })
-});
-
-const errorResponseSchema = baseResponseSchema.extend({
-  success: z.literal(false),
-  data: z.null()
-});
 
 // Portfolio response schema usando Zod
 const portfolioResponseSchema = z.object({
@@ -46,20 +39,16 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         description: z.string().max(1000).optional()
       }),
       response: {
-        201: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: portfolioResponseSchema
-        }),
-        400: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        201: standardSuccessResponseSchema(portfolioResponseSchema),
+        400: standardError400Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       }
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const userId = authRequest.user.id;
-        const body = authRequest.body as any;
+        const userId = request.user.id;
+        const body = request.body;
 
         // TODO: Implement CreateInvestmentPortfolioUseCase
         const portfolio = {
@@ -72,27 +61,17 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
           updatedAt: new Date()
         };
 
-        return reply.status(201).send({
-          success: true,
-          data: portfolio,
-          message: 'Investment portfolio created successfully',
-          errors: null,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.success(
+          portfolio,
+          { message: 'Portfólio de investimento criado com sucesso' }
+        );
+        
+        return reply.status(201).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -111,60 +90,36 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         limit: z.coerce.number().min(1).max(100).default(20)
       }),
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: z.object({
-            portfolios: z.array(portfolioResponseSchema),
-            pagination: z.object({
-              current_page: z.number(),
-              total_pages: z.number(),
-              total_items: z.number(),
-              items_per_page: z.number()
-            })
-          })
-        }),
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardPaginatedResponseSchema(portfolioResponseSchema),
+        401: standardError401Schema,
+        500: standardError500Schema
       }
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const userId = authRequest.user.id;
-        const query = authRequest.query as any;
+        const userId = request.user.id;
+        const query = request.query;
 
         // TODO: Implement GetInvestmentPortfoliosUseCase
-        const result = {
-          portfolios: [],
-          pagination: {
-            current_page: query.page || 1,
-            total_pages: 0,
-            total_items: 0,
-            items_per_page: query.limit || 20
-          }
-        };
+        const portfolios: any[] = [];
+        const currentPage = query.page || 1;
+        const itemsPerPage = query.limit || 20;
+        
+        const response = ResponseHelper.successPaginated(
+          portfolios,
+          currentPage,
+          0, // totalPages
+          0, // totalItems
+          itemsPerPage,
+          { message: 'Portfólios recuperados com sucesso' }
+        );
 
-        return reply.send({
-          success: true,
-          data: result,
-          message: 'Portfolios retrieved successfully',
-          errors: null,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        return reply.send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -182,43 +137,25 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         id: z.string().uuid()
       }),
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: portfolioResponseSchema
-        }),
-        404: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(portfolioResponseSchema),
+        404: standardError404Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       }
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = authRequest.params as { id: string };
-        const userId = authRequest.user.id;
+        const { id } = request.params as { id: string };
+        const userId = request.user.id;
 
         // TODO: Implement GetInvestmentPortfolioByIdUseCase
-        return reply.status(404).send({
-          success: false,
-          data: null,
-          message: 'Portfolio not found',
-          errors: ['PORTFOLIO_NOT_FOUND'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.notFound('Portfólio');
+        return reply.status(404).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -240,44 +177,26 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         description: z.string().max(1000).optional()
       }),
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: portfolioResponseSchema
-        }),
-        404: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(portfolioResponseSchema),
+        404: standardError404Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       }
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = authRequest.params as { id: string };
-        const userId = authRequest.user.id;
-        const body = authRequest.body as any;
+        const { id } = request.params as { id: string };
+        const userId = request.user.id;
+        const body = request.body;
 
         // TODO: Implement UpdateInvestmentPortfolioUseCase
-        return reply.status(404).send({
-          success: false,
-          data: null,
-          message: 'Portfolio not found',
-          errors: ['PORTFOLIO_NOT_FOUND'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.notFound('Portfólio');
+        return reply.status(404).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
@@ -295,43 +214,25 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         id: z.string().uuid()
       }),
       response: {
-        200: baseResponseSchema.extend({
-          success: z.literal(true),
-          data: z.null()
-        }),
-        404: errorResponseSchema,
-        401: errorResponseSchema,
-        500: errorResponseSchema
+        200: standardSuccessResponseSchema(z.null()),
+        404: standardError404Schema,
+        401: standardError401Schema,
+        500: standardError500Schema
       }
     },
-    handler: async (request, reply) => {
-      const authRequest = request as AuthenticatedRequest;
+    handler: async (request: AuthenticatedRequest, reply) => {
       try {
-        const { id } = authRequest.params as { id: string };
-        const userId = authRequest.user.id;
+        const { id } = request.params as { id: string };
+        const userId = request.user.id;
 
         // TODO: Implement DeleteInvestmentPortfolioUseCase
-        return reply.status(404).send({
-          success: false,
-          data: null,
-          message: 'Portfolio not found',
-          errors: ['PORTFOLIO_NOT_FOUND'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.notFound('Portfólio');
+        return reply.status(404).send(response);
       } catch (error) {
-        return reply.status(500).send({
-          success: false,
-          data: null,
-          message: 'Internal server error',
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-          }
-        });
+        const response = ResponseHelper.internalServerError(
+          error instanceof Error ? error : undefined
+        );
+        return reply.status(500).send(response);
       }
     },
   });
