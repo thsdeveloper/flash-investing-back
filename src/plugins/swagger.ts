@@ -35,15 +35,11 @@ export default fp(async function (fastify) {
       servers: [
         {
           url: `http://localhost:${env.PORT}`,
+          description: 'Servidor Local'
+        },
+        {
+          url: 'https://flash-investing-back-develop.up.railway.app',
           description: 'Servidor de desenvolvimento'
-        },
-        {
-          url: 'https://api.flashinvesting.com',
-          description: 'Servidor de produção'
-        },
-        {
-          url: 'https://staging-api.flashinvesting.com',  
-          description: 'Servidor de homologação'
         }
       ],
       tags: [
