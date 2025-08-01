@@ -125,18 +125,18 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Transação criada com sucesso' }
         );
         
-        return reply.status(201).send(response);
+        return reply.status(201).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any);
       }
     }
   });
@@ -217,10 +217,10 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Transações recuperadas com sucesso' }
         );
 
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any);
       }
     }
   });
@@ -248,7 +248,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
 
         if (!transaction || !transaction.belongsToUser((request as AuthenticatedRequest).user.id)) {
           const response = ResponseHelper.notFound('Transação');
-          return reply.status(404).send(response);
+          return reply.status(404).send(response as any);
         }
 
         const transactionData = {
@@ -272,10 +272,10 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Transação recuperada com sucesso' }
         );
 
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any);
       }
     }
   });
@@ -312,23 +312,23 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Transação atualizada com sucesso' }
         );
 
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           if (error.code === 'TRANSACTION_NOT_FOUND') {
             const response = ResponseHelper.notFound('Transação');
-            return reply.status(404).send(response);
+            return reply.status(404).send(response as any);
           }
           
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any);
       }
     }
   });
@@ -362,7 +362,7 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
             'Pelo menos um campo deve ser fornecido para atualização',
             ['MISSING_FIELDS']
           );
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any);
         }
         
         // Se categoria for um UUID, mapear para categoriaId
@@ -384,23 +384,23 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Transação atualizada parcialmente com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           if (error.code === 'TRANSACTION_NOT_FOUND') {
             const response = ResponseHelper.notFound('Transação');
-            return reply.status(404).send(response);
+            return reply.status(404).send(response as any);
           }
           
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any);
       }
     }
   });
@@ -435,23 +435,23 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Transação deletada com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           if (error.code === 'TRANSACTION_NOT_FOUND') {
             const response = ResponseHelper.notFound('Transação');
-            return reply.status(404).send(response);
+            return reply.status(404).send(response as any);
           }
           
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any);
       }
     }
   });
@@ -486,23 +486,23 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Transação marcada como efetuada com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           if (error.code === 'TRANSACTION_NOT_FOUND') {
             const response = ResponseHelper.notFound('Transação');
-            return reply.status(404).send(response);
+            return reply.status(404).send(response as any);
           }
           
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any);
       }
     }
   });
@@ -537,18 +537,18 @@ const transactionRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Orçamento recuperado com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any);
       }
     }
   });

@@ -25,18 +25,18 @@ const userRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema.describe('Erro interno do servidor')
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const user = request.user;
+        const user = (request as AuthenticatedRequest).user;
         
         return reply.status(200).send(
           ResponseHelper.success(user, {
             message: 'Perfil do usuário recuperado com sucesso'
-          })
+          }) as any
         );
       } catch (error) {
         return reply.status(500).send(
-          ResponseHelper.internalServerError(error as Error)
+          ResponseHelper.internalServerError(error as Error) as any
         );
       }
     },

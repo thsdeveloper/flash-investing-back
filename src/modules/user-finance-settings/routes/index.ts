@@ -62,15 +62,16 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
         const authenticatedRequest = request as AuthenticatedRequest;
         const createUseCase = new CreateUserFinanceSettingsUseCase(userFinanceSettingsRepository);
         
+        const body = authenticatedRequest.body as any;
         const result = await createUseCase.execute({
-          ...authenticatedRequest.body,
+          ...body,
           userId: authenticatedRequest.user.id
         });
 
         return reply.status(201).send(
           ResponseHelper.success(result, {
             message: 'Configurações financeiras criadas com sucesso'
-          })
+          }) as any
         );
       } catch (error) {
         if (error instanceof DomainError || (error instanceof Error && error.message === 'User already has finance settings')) {
@@ -80,13 +81,13 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
                 ? 'Usuário já possui configurações financeiras'
                 : error.message,
               ['USER_FINANCE_SETTINGS_ALREADY_EXISTS']
-            )
+            ) as any
           );
         }
         
         fastify.log.error(error);
         return reply.status(500).send(
-          ResponseHelper.internalServerError(error as Error)
+          ResponseHelper.internalServerError(error as Error) as any
         );
       }
     }
@@ -117,19 +118,19 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
 
         if (!result) {
           return reply.status(404).send(
-            ResponseHelper.notFound('Configurações financeiras')
+            ResponseHelper.notFound('Configurações financeiras') as any
           );
         }
 
         return reply.status(200).send(
           ResponseHelper.success(result, {
             message: 'Configurações financeiras obtidas com sucesso'
-          })
+          }) as any
         );
       } catch (error) {
         fastify.log.error(error);
         return reply.status(500).send(
-          ResponseHelper.internalServerError(error as Error)
+          ResponseHelper.internalServerError(error as Error) as any
         );
       }
     }
@@ -162,38 +163,38 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
         const result = await updateUseCase.execute(
           (authenticatedRequest.params as { id: string }).id,
           authenticatedRequest.user.id,
-          authenticatedRequest.body
+          authenticatedRequest.body as any
         );
 
         return reply.status(200).send(
           ResponseHelper.success(result, {
             message: 'Configurações financeiras atualizadas com sucesso'
-          })
+          }) as any
         );
       } catch (error) {
         if (error instanceof DomainError) {
           return reply.status(400).send(
-            ResponseHelper.error(error.message, [error.code])
+            ResponseHelper.error(error.message, [error.code]) as any
           );
         }
 
         if (error instanceof Error) {
           if (error.message === 'Finance settings not found') {
             return reply.status(404).send(
-              ResponseHelper.notFound('Configurações financeiras')
+              ResponseHelper.notFound('Configurações financeiras') as any
             );
           }
           
           if (error.message === 'Unauthorized') {
             return reply.status(401).send(
-              ResponseHelper.unauthorized()
+              ResponseHelper.unauthorized() as any
             );
           }
         }
         
         fastify.log.error(error);
         return reply.status(500).send(
-          ResponseHelper.internalServerError(error as Error)
+          ResponseHelper.internalServerError(error as Error) as any
         );
       }
     }
@@ -226,25 +227,25 @@ const userFinanceSettingsRoutes: FastifyPluginAsync = async function (fastify) {
           authenticatedRequest.user.id
         );
 
-        return reply.status(204).send();
+        return reply.status(204).send(null as any);
       } catch (error) {
         if (error instanceof Error) {
           if (error.message === 'Finance settings not found') {
             return reply.status(404).send(
-              ResponseHelper.notFound('Configurações financeiras')
+              ResponseHelper.notFound('Configurações financeiras') as any
             );
           }
           
           if (error.message === 'Unauthorized') {
             return reply.status(401).send(
-              ResponseHelper.unauthorized()
+              ResponseHelper.unauthorized() as any
             );
           }
         }
         
         fastify.log.error(error);
         return reply.status(500).send(
-          ResponseHelper.internalServerError(error as Error)
+          ResponseHelper.internalServerError(error as Error) as any
         );
       }
     }

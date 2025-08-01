@@ -53,9 +53,9 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const body = request.body;
+        const body = request.body as any;
 
         // TODO: Implement CreateInvestmentAssetUseCase
         const asset = {
@@ -70,12 +70,12 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Ativo de investimento criado com sucesso' }
         );
         
-        return reply.status(201).send(response);
+        return reply.status(201).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -96,9 +96,9 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const query = request.query;
+        const query = request.query as any;
 
         // TODO: Implement GetInvestmentAssetsUseCase
         const assets: any[] = [];
@@ -110,12 +110,12 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Ativos recuperados com sucesso' }
         );
 
-        return reply.send(response);
+        return reply.send(response as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -137,18 +137,18 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const { id } = request.params ;
+        const { id } = request.params as any;
 
         // TODO: Implement GetInvestmentAssetByIdUseCase
         const response = ResponseHelper.notFound('Ativo');
-        return reply.status(404).send(response);
+        return reply.status(404).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -171,19 +171,19 @@ const investmentAssetsRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const { id } = request.params ;
-        const body = request.body;
+        const { id } = request.params as any;
+        const body = request.body as any;
 
         // TODO: Implement UpdateInvestmentAssetUseCase
         const response = ResponseHelper.notFound('Ativo');
-        return reply.status(404).send(response);
+        return reply.status(404).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });

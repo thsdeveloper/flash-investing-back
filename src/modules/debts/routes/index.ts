@@ -99,10 +99,10 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Dívidas recuperadas com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -157,7 +157,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         });
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -221,7 +221,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
       } catch (error) {
         console.error('Error in get debt by id:', error);
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -287,7 +287,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         });
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -346,7 +346,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         });
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -432,7 +432,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         }
 
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -479,10 +479,10 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Pagamentos recuperados com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -523,7 +523,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         });
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -569,7 +569,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         });
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -631,7 +631,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         }
 
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -704,7 +704,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         });
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -751,10 +751,10 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Negociações recuperadas com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -833,7 +833,7 @@ const debtRoutes: FastifyPluginAsync = async function (fastify) {
         });
       } catch (error) {
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });

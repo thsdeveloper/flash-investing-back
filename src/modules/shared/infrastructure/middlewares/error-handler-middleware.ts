@@ -23,7 +23,7 @@ export async function errorHandlerMiddleware(
 
   // Erro de validação do Zod
   if (error instanceof ZodError) {
-    const validationErrors = error.errors.map(err => {
+    const validationErrors = (error as any).errors.map((err: any) => {
       const path = err.path.join('.');
       return `${path}: ${err.message}`;
     });

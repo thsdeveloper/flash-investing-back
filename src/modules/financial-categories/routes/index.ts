@@ -93,18 +93,18 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Categorias financeiras recuperadas com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response  as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response  as any);
       }
     },
   });
@@ -134,18 +134,18 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Estatísticas das categorias recuperadas com sucesso' }
         );
         
-        return reply.status(200).send(response );
+        return reply.status(200).send(response  as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response  as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response  as any);
       }
     },
   });
@@ -176,7 +176,7 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
         
         if (!result) {
           const response = ResponseHelper.notFound('Categoria financeira');
-          return reply.status(404).send(response );
+          return reply.status(404).send(response  as any);
         }
         
         const response = ResponseHelper.success(
@@ -184,14 +184,14 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Categoria financeira recuperada com sucesso' }
         );
         
-        return reply.status(200).send(response );
+        return reply.status(200).send(response  as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response  as any);
         }
         
         if (error instanceof Error && error.message.includes('Unauthorized')) {
@@ -199,11 +199,11 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
             'Acesso negado à categoria financeira',
             ['UNAUTHORIZED']
           );
-          return reply.status(403).send(response );
+          return reply.status(403).send(response  as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response  as any);
       }
     },
   });
@@ -247,14 +247,14 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Categoria financeira criada com sucesso' }
         );
         
-        return reply.status(201).send(response );
+        return reply.status(201).send(response  as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response  as any);
         }
         
         if (error instanceof Error && error.message.includes('already exists')) {
@@ -262,11 +262,11 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
             'Já existe uma categoria com este nome',
             ['CATEGORY_NAME_ALREADY_EXISTS']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response  as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response  as any);
       }
     },
   });
@@ -315,20 +315,20 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Categoria financeira atualizada com sucesso' }
         );
         
-        return reply.status(200).send(response );
+        return reply.status(200).send(response  as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response  as any);
         }
         
         if (error instanceof Error) {
           if (error.message.includes('not found')) {
             const response = ResponseHelper.notFound('Categoria financeira');
-            return reply.status(404).send(response );
+            return reply.status(404).send(response  as any);
           }
           
           if (error.message.includes('Unauthorized')) {
@@ -336,7 +336,7 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
               'Acesso negado à categoria financeira',
               ['UNAUTHORIZED']
             );
-            return reply.status(403).send(response );
+            return reply.status(403).send(response  as any);
           }
           
           if (error.message.includes('already exists')) {
@@ -344,12 +344,12 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
               'Já existe uma categoria com este nome',
               ['CATEGORY_NAME_ALREADY_EXISTS']
             );
-            return reply.status(400).send(response );
+            return reply.status(400).send(response  as any);
           }
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response  as any);
       }
     },
   });
@@ -383,20 +383,20 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Categoria financeira removida com sucesso' }
         );
         
-        return reply.status(200).send(response );
+        return reply.status(200).send(response  as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response  as any);
         }
         
         if (error instanceof Error) {
           if (error.message.includes('not found')) {
             const response = ResponseHelper.notFound('Categoria financeira');
-            return reply.status(404).send(response );
+            return reply.status(404).send(response  as any);
           }
           
           if (error.message.includes('Unauthorized')) {
@@ -404,12 +404,12 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
               'Acesso negado à categoria financeira',
               ['UNAUTHORIZED']
             );
-            return reply.status(403).send(response );
+            return reply.status(403).send(response  as any);
           }
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response  as any);
       }
     },
   });
@@ -448,14 +448,14 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Categorias reordenadas com sucesso' }
         );
         
-        return reply.status(200).send(response );
+        return reply.status(200).send(response  as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response  as any);
         }
         
         if (error instanceof Error) {
@@ -464,7 +464,7 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
               'Uma ou mais categorias não foram encontradas',
               ['CATEGORY_NOT_FOUND']
             );
-            return reply.status(404).send(response );
+            return reply.status(404).send(response  as any);
           }
           
           if (error.message.includes('Unauthorized')) {
@@ -472,12 +472,12 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
               'Acesso negado a uma ou mais categorias',
               ['UNAUTHORIZED']
             );
-            return reply.status(403).send(response );
+            return reply.status(403).send(response  as any);
           }
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response  as any);
       }
     },
   });
@@ -517,14 +517,14 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Categorias atualizadas em lote com sucesso' }
         );
         
-        return reply.status(200).send(response );
+        return reply.status(200).send(response  as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response  as any);
         }
         
         if (error instanceof Error) {
@@ -533,7 +533,7 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
               'Uma ou mais categorias não foram encontradas',
               ['CATEGORY_NOT_FOUND']
             );
-            return reply.status(404).send(response );
+            return reply.status(404).send(response  as any);
           }
           
           if (error.message.includes('Unauthorized')) {
@@ -541,12 +541,12 @@ const financialCategoriesRoutes: FastifyPluginAsync = async function (fastify) {
               'Acesso negado a uma ou mais categorias',
               ['UNAUTHORIZED']
             );
-            return reply.status(403).send(response );
+            return reply.status(403).send(response  as any);
           }
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response  as any);
       }
     },
   });

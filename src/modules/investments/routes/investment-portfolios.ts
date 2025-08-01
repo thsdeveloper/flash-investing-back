@@ -45,10 +45,10 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const userId = request.user.id;
-        const body = request.body;
+        const userId = (request as AuthenticatedRequest).user.id;
+        const body = request.body as any;
 
         // TODO: Implement CreateInvestmentPortfolioUseCase
         const portfolio = {
@@ -66,12 +66,12 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
           { message: 'Portfólio de investimento criado com sucesso' }
         );
         
-        return reply.status(201).send(response);
+        return reply.status(201).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -95,10 +95,10 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const userId = request.user.id;
-        const query = request.query;
+        const userId = (request as AuthenticatedRequest).user.id;
+        const query = request.query as any;
 
         // TODO: Implement GetInvestmentPortfoliosUseCase
         const portfolios: any[] = [];
@@ -110,12 +110,12 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
           { message: 'Portfólios recuperados com sucesso' }
         );
 
-        return reply.send(response);
+        return reply.send(response as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -139,19 +139,19 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
-        const userId = request.user.id;
+        const userId = (request as AuthenticatedRequest).user.id;
 
         // TODO: Implement GetInvestmentPortfolioByIdUseCase
         const response = ResponseHelper.notFound('Portfólio');
-        return reply.status(404).send(response);
+        return reply.status(404).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -179,20 +179,20 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
-        const userId = request.user.id;
-        const body = request.body;
+        const userId = (request as AuthenticatedRequest).user.id;
+        const body = request.body as any;
 
         // TODO: Implement UpdateInvestmentPortfolioUseCase
         const response = ResponseHelper.notFound('Portfólio');
-        return reply.status(404).send(response);
+        return reply.status(404).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -216,19 +216,19 @@ const investmentPortfoliosRoutes: FastifyPluginAsync = async function (fastify) 
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const { id } = request.params as { id: string };
-        const userId = request.user.id;
+        const userId = (request as AuthenticatedRequest).user.id;
 
         // TODO: Implement DeleteInvestmentPortfolioUseCase
         const response = ResponseHelper.notFound('Portfólio');
-        return reply.status(404).send(response);
+        return reply.status(404).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });

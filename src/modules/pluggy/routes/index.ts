@@ -53,13 +53,13 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conectores recuperados com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         fastify.log.error('Erro ao buscar conectores:', error);
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : new Error('Erro desconhecido')
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -81,12 +81,14 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const userId = request.user.id;
+        const userId = (request as AuthenticatedRequest).user.id;
+        const body = request.body as any;
         const createItemData = {
-          ...request.body,
-          clientUserId: userId
+          ...body,
+          clientUserId: userId,
+          parameters: body.parameters as Record<string, string>
         };
         
         const item = await pluggyClient.createItem(createItemData);
@@ -109,18 +111,18 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conexão bancária criada com sucesso' }
         );
         
-        return reply.status(201).send(response);
+        return reply.status(201).send(response as any as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(error.message, [error.code]);
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any as any);
         }
         
         fastify.log.error('Erro ao criar item:', error);
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : new Error('Erro desconhecido')
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -144,7 +146,7 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const { itemId } = request.params as { itemId: string };
         
@@ -168,18 +170,18 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Status da conexão recuperado com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         if (error instanceof Error && error.message.includes('not found')) {
           const response = ResponseHelper.notFound('Item');
-          return reply.status(404).send(response);
+          return reply.status(404).send(response as any as any);
         }
         
         fastify.log.error('Erro ao buscar item:', error);
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : new Error('Erro desconhecido')
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -207,7 +209,7 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const { itemId } = request.params as { itemId: string };
         const { parameters } = request.body as { parameters: Record<string, string> };
@@ -232,23 +234,23 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Parâmetros submetidos com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         if (error instanceof Error && error.message.includes('not found')) {
           const response = ResponseHelper.notFound('Item');
-          return reply.status(404).send(response);
+          return reply.status(404).send(response as any as any);
         }
         
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(error.message, [error.code]);
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any as any);
         }
         
         fastify.log.error('Erro ao submeter parâmetros:', error);
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : new Error('Erro desconhecido')
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -272,7 +274,7 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const { itemId } = request.params as { itemId: string };
         
@@ -283,18 +285,18 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Atualização da conexão iniciada com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         if (error instanceof Error && error.message.includes('not found')) {
           const response = ResponseHelper.notFound('Item');
-          return reply.status(404).send(response);
+          return reply.status(404).send(response as any as any);
         }
         
         fastify.log.error('Erro ao atualizar item:', error);
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : new Error('Erro desconhecido')
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -318,7 +320,7 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const { itemId } = request.params as { itemId: string };
         
@@ -329,18 +331,18 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conexão bancária removida com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         if (error instanceof Error && error.message.includes('not found')) {
           const response = ResponseHelper.notFound('Item');
-          return reply.status(404).send(response);
+          return reply.status(404).send(response as any as any);
         }
         
         fastify.log.error('Erro ao remover item:', error);
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : new Error('Erro desconhecido')
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -362,7 +364,7 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const { itemId } = request.query as { itemId: string };
         
@@ -382,18 +384,18 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Contas recuperadas com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(error.message, [error.code]);
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any as any);
         }
         
         fastify.log.error('Erro ao buscar contas:', error);
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : new Error('Erro desconhecido')
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -415,7 +417,7 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
         500: standardError500Schema
       }
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
         const { itemId, accountId, from, to } = request.query as {
           itemId: string;
@@ -449,18 +451,18 @@ const pluggyRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Transações recuperadas com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(error.message, [error.code]);
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any as any);
         }
         
         fastify.log.error('Erro ao buscar transações:', error);
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : new Error('Erro desconhecido')
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });

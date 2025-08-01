@@ -55,10 +55,10 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
         500: standardError500Schema
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const userId = request.user.id;
-        const body = request.body;
+        const userId = (request as AuthenticatedRequest).user.id;
+        const body = request.body as any;
 
         // TODO: Implement CreateInvestmentRecommendationUseCase
         const recommendation = {
@@ -74,12 +74,12 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
           { message: 'Recomendação de investimento criada com sucesso' }
         );
         
-        return reply.status(201).send(response);
+        return reply.status(201).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -100,13 +100,13 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
         500: standardError500Schema
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const userId = request.user.id;
-        const query = request.query;
+        const userId = (request as AuthenticatedRequest).user.id;
+        const query = request.query as any;
 
         // TODO: Implement GetInvestmentRecommendationsUseCase
-        const recommendations: any[] = [];
+        const recommendations = [] as any[];
         const currentPage = query.page || 1;
         const itemsPerPage = query.limit || 20;
         
@@ -115,12 +115,12 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
           { message: 'Recomendações recuperadas com sucesso' }
         );
 
-        return reply.send(response);
+        return reply.send(response as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -140,24 +140,24 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
         500: standardError500Schema
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const userId = request.user.id;
+        const userId = (request as AuthenticatedRequest).user.id;
 
         // TODO: Implement GetActiveInvestmentRecommendationsUseCase
-        const recommendations = [];
+        const recommendations = [] as any[];
 
         const response = ResponseHelper.success(
           recommendations,
           { message: 'Recomendações ativas recuperadas com sucesso' }
         );
         
-        return reply.send(response);
+        return reply.send(response as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -179,19 +179,19 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
         500: standardError500Schema
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const { id } = request.params ;
-        const userId = request.user.id;
+        const { id } = request.params as any;
+        const userId = (request as AuthenticatedRequest).user.id;
 
         // TODO: Implement GetInvestmentRecommendationByIdUseCase
         const response = ResponseHelper.notFound('Recomendação');
-        return reply.status(404).send(response);
+        return reply.status(404).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -214,20 +214,20 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
         500: standardError500Schema
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const { id } = request.params ;
-        const userId = request.user.id;
-        const body = request.body;
+        const { id } = request.params as any;
+        const userId = (request as AuthenticatedRequest).user.id;
+        const body = request.body as any;
 
         // TODO: Implement UpdateInvestmentRecommendationUseCase
         const response = ResponseHelper.notFound('Recomendação');
-        return reply.status(404).send(response);
+        return reply.status(404).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });
@@ -249,19 +249,19 @@ const investmentRecommendationsRoutes: FastifyPluginAsync = async function (fast
         500: standardError500Schema
       },
     },
-    handler: async (request: AuthenticatedRequest, reply) => {
+    handler: async (request, reply) => {
       try {
-        const { id } = request.params ;
-        const userId = request.user.id;
+        const { id } = request.params as any;
+        const userId = (request as AuthenticatedRequest).user.id;
 
         // TODO: Implement ToggleInvestmentRecommendationUseCase
         const response = ResponseHelper.notFound('Recomendação');
-        return reply.status(404).send(response);
+        return reply.status(404).send(response as any as any);
       } catch (error) {
         const response = ResponseHelper.internalServerError(
           error instanceof Error ? error : undefined
         );
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     },
   });

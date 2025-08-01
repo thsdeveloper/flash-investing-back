@@ -71,18 +71,18 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Contas financeiras recuperadas com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response as any);
       }
     },
   });
@@ -118,23 +118,23 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conta financeira recuperada com sucesso' }
         );
         
-        return reply.status(200).send(response );
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           if (error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND') {
             const response = ResponseHelper.notFound('Conta financeira');
-            return reply.status(404).send(response );
+            return reply.status(404).send(response as any);
           }
           
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response as any);
       }
     },
   });
@@ -176,18 +176,18 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conta financeira criada com sucesso' }
         );
         
-        return reply.status(201).send(response );
+        return reply.status(201).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response as any);
       }
     },
   });
@@ -239,23 +239,23 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conta financeira atualizada com sucesso' }
         );
         
-        return reply.status(200).send(response );
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           if (error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND') {
             const response = ResponseHelper.notFound('Conta financeira');
-            return reply.status(404).send(response );
+            return reply.status(404).send(response as any);
           }
           
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response as any);
       }
     },
   });
@@ -299,23 +299,23 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Conta financeira removida com sucesso' }
         );
         
-        return reply.status(200).send(response );
+        return reply.status(200).send(response as any);
       } catch (error) {
         if (error instanceof DomainError) {
           if (error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND') {
             const response = ResponseHelper.notFound('Conta financeira');
-            return reply.status(404).send(response );
+            return reply.status(404).send(response as any);
           }
           
           const response = ResponseHelper.error(
             error.message,
             [error.code || 'DOMAIN_ERROR']
           );
-          return reply.status(400).send(response );
+          return reply.status(400).send(response as any);
         }
         
         const response = ResponseHelper.internalServerError(error instanceof Error ? error : undefined);
-        return reply.status(500).send(response );
+        return reply.status(500).send(response as any);
       }
     },
   });

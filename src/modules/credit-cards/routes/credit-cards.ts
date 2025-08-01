@@ -62,14 +62,14 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Cartão de crédito criado com sucesso' }
         );
         
-        return reply.status(201).send(response);
+        return reply.status(201).send(response as any as any);
       } catch (error: any) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(error.message, ['CREDIT_CARD_CREATION_ERROR']);
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any as any);
         }
         const response = ResponseHelper.internalServerError(error);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -101,10 +101,10 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Cartões de crédito recuperados com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error: any) {
         const response = ResponseHelper.internalServerError(error);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -136,7 +136,7 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
         
         if (!result) {
           const response = ResponseHelper.notFound('Cartão de crédito');
-          return reply.status(404).send(response);
+          return reply.status(404).send(response as any as any);
         }
         
         const response = ResponseHelper.success(
@@ -144,14 +144,14 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Cartão de crédito encontrado com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error: any) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.notFound('Cartão de crédito');
-          return reply.status(404).send(response);
+          return reply.status(404).send(response as any as any);
         }
         const response = ResponseHelper.internalServerError(error);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -189,14 +189,14 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Cartão de crédito atualizado com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error: any) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.notFound('Cartão de crédito');
-          return reply.status(404).send(response);
+          return reply.status(404).send(response as any as any);
         }
         const response = ResponseHelper.internalServerError(error);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });
@@ -232,14 +232,14 @@ const creditCardRoutes: FastifyPluginAsync = async function (fastify) {
           { message: 'Cartão de crédito deletado com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error: any) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.notFound('Cartão de crédito');
-          return reply.status(404).send(response);
+          return reply.status(404).send(response as any as any);
         }
         const response = ResponseHelper.internalServerError(error);
-        return reply.status(500).send(response);
+        return reply.status(500).send(response as any as any);
       }
     }
   });

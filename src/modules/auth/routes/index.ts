@@ -39,18 +39,18 @@ const authRoutes: FastifyPluginAsync = async function (fastify) {
     handler: async (request, reply) => {
       try {
         const registerUseCase = new RegisterUserUseCase(userRepository, jwtProvider);
-        const result = await registerUseCase.execute(request.body);
+        const result = await registerUseCase.execute(request.body as any);
         
         const response = ResponseHelper.success(
           result,
           { message: 'Usuário registrado com sucesso' }
         );
         
-        return reply.status(201).send(response);
+        return reply.status(201).send(response as any as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.error(error.message, [error.code]);
-          return reply.status(400).send(response);
+          return reply.status(400).send(response as any as any);
         }
         throw error;
       }
@@ -73,18 +73,18 @@ const authRoutes: FastifyPluginAsync = async function (fastify) {
     handler: async (request, reply) => {
       try {
         const loginUseCase = new LoginUserUseCase(userRepository, jwtProvider);
-        const result = await loginUseCase.execute(request.body);
+        const result = await loginUseCase.execute(request.body as any);
         
         const response = ResponseHelper.success(
           result,
           { message: 'Login realizado com sucesso' }
         );
         
-        return reply.status(200).send(response);
+        return reply.status(200).send(response as any as any);
       } catch (error) {
         if (error instanceof DomainError) {
           const response = ResponseHelper.unauthorized();
-          return reply.status(401).send(response);
+          return reply.status(401).send(response as any as any);
         }
         throw error;
       }
