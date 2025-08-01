@@ -1,5 +1,5 @@
 import fp from 'fastify-plugin';
-import { connectDatabase, prisma } from '../infrastructure/database/prisma-client';
+import { connectDatabase, prisma } from '@src/infrastructure/database/prisma-client';
 
 export default fp(async function (fastify) {
   await connectDatabase();

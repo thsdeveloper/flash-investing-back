@@ -1,7 +1,7 @@
 import { fastify } from 'fastify';
 import autoLoad from '@fastify/autoload';
 import { join } from 'path';
-import { env } from './infrastructure/config/env';
+import { env } from '@src/infrastructure/config/env';
 
 const app = fastify({
   logger: true
@@ -15,9 +15,10 @@ async function start() {
       options: {}
     });
 
-    // Auto-load routes
+    // Auto-load modular routes
     await app.register(autoLoad, {
-      dir: join(__dirname, 'routes'),
+      dir: join(__dirname, 'modules'),
+      dirNameRoutePrefix: false,
       options: {}
     });
 
