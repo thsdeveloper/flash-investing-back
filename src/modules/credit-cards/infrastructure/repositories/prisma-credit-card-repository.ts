@@ -108,6 +108,21 @@ export class PrismaCreditCardRepository implements CreditCardRepository {
     return creditCard ? this.toDomain(creditCard) : null;
   }
 
+  async findByFinancialAccountId(financialAccountId: string): Promise<CreditCard[]> {
+    const creditCards = await this.prisma.creditCard.findMany({
+      where: { contaFinanceiraId: financialAccountId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return creditCards.map(card => this.toDomain(card));
+  }
+
+  async countByFinancialAccountId(financialAccountId: string): Promise<number> {
+    return await this.prisma.creditCard.count({
+      where: { contaFinanceiraId: financialAccountId },
+    });
+  }
+
   private toDomain(data: any): CreditCard {
     return new CreditCard({
       id: data.id,

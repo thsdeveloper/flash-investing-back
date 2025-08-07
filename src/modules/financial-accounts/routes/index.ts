@@ -11,12 +11,19 @@ import {
   standardError400Schema,
   standardError401Schema,
   standardError404Schema,
-  standardError500Schema
+  standardError500Schema,
+  standardErrorResponseSchema
 } from '@src/modules/shared/schemas/common';
 import { ResponseHelper } from '@src/modules/shared/utils/response-helper';
 import {
   PrismaFinancialAccountRepository
 } from "@src/modules/financial-accounts/infrastructure/repositories/prisma-financial-account-repository";
+import {
+  PrismaTransactionRepository
+} from "@src/modules/transactions/infrastructure/repositories/prisma-transaction-repository";
+import {
+  PrismaCreditCardRepository
+} from "@src/modules/credit-cards/infrastructure/repositories/prisma-credit-card-repository";
 import {
   GetFinancialAccountsUseCase
 } from "@src/modules/financial-accounts/application/use-cases/get-financial-accounts";
@@ -41,6 +48,8 @@ import {
 
 const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
   const financialAccountRepository = new PrismaFinancialAccountRepository(prisma);
+  const transactionRepository = new PrismaTransactionRepository(prisma);
+  const creditCardRepository = new PrismaCreditCardRepository(prisma);
 
   // GET /financial_accounts - Listar contas financeiras
   fastify.withTypeProvider<ZodTypeProvider>().route({
@@ -280,6 +289,7 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
         400: standardError400Schema,
         401: standardError401Schema,
         404: standardError404Schema,
+        409: standardErrorResponseSchema.describe('Conflito - Conta possui dependências'),
         500: standardError500Schema
       }
     },
@@ -287,7 +297,11 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
       try {
         const query = request.query ;
         const { id } = request.params as { id: string };
-        const deleteAccountUseCase = new DeleteFinancialAccountUseCase(financialAccountRepository);
+        const deleteAccountUseCase = new DeleteFinancialAccountUseCase(
+          financialAccountRepository,
+          transactionRepository,
+          creditCardRepository
+        );
         await deleteAccountUseCase.execute(
           id,
           (request as AuthenticatedRequest).user.id,
@@ -305,6 +319,14 @@ const financialAccountRoutes: FastifyPluginAsync = async function (fastify) {
           if (error.code === 'FINANCIAL_ACCOUNT_NOT_FOUND') {
             const response = ResponseHelper.notFound('Conta financeira');
             return reply.status(404).send(response as any);
+          }
+          
+          if (error.code === 'ACCOUNT_HAS_TRANSACTIONS' || error.code === 'ACCOUNT_HAS_CREDIT_CARDS') {
+            const response = ResponseHelper.error(
+              error.message,
+              [error.code]
+            );
+            return reply.status(409).send(response as any); // 409 Conflict
           }
           
           const response = ResponseHelper.error(

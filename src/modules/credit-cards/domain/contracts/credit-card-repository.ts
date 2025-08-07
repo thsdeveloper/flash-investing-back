@@ -9,4 +9,6 @@ export interface CreditCardRepository {
   delete(id: string): Promise<void>;
   findByUserIdAndLastDigits(userId: string, lastDigits: string): Promise<CreditCard[]>;
   findByUserIdAndId(userId: string, id: string): Promise<CreditCard | null>;
+  findByFinancialAccountId(financialAccountId: string): Promise<CreditCard[]>;
+  countByFinancialAccountId(financialAccountId: string): Promise<number>;
 }

@@ -283,4 +283,10 @@ export class PrismaTransactionRepository implements TransactionRepository {
 
     return result._sum.valor?.toNumber() || 0;
   }
+
+  async countByAccountId(accountId: string): Promise<number> {
+    return await this.prisma.transaction.count({
+      where: { contaFinanceiraId: accountId }
+    });
+  }
 }

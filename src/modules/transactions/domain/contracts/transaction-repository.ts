@@ -12,4 +12,5 @@ export interface TransactionRepository {
   delete(id: string): Promise<void>;
   getTotalByUserAndCategory(userId: string, category: string, startDate: Date, endDate: Date): Promise<number>;
   getTotalByUserAndType(userId: string, type: 'receita' | 'despesa', startDate: Date, endDate: Date): Promise<number>;
+  countByAccountId(accountId: string): Promise<number>;
 }
