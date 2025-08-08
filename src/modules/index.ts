@@ -13,8 +13,6 @@ export { default as financialAccountsRoutes, autoPrefix as financialAccountsPref
 export { default as financialCategoriesRoutes, autoPrefix as financialCategoriesPrefix } from './financial-categories/routes';
 export { default as userFinanceSettingsRoutes, autoPrefix as userFinanceSettingsPrefix } from './user-finance-settings/routes';
 
-// Integration modules
-export { default as pluggyRoutes, autoPrefix as pluggyPrefix } from './pluggy/routes';
 
 // User management
 export { default as usersRoutes, autoPrefix as usersPrefix } from './users/routes';

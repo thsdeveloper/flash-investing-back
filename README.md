@@ -26,7 +26,6 @@
 - 🔐 **Autenticação JWT** com refresh tokens
 - 💳 **Gestão Completa de Finanças**: contas, transações, cartões de crédito
 - 📊 **Regra 50/30/20** para orçamento pessoal
-- 🏦 **Integração Bancária** via Pluggy/Belvo APIs
 - ⚡ **Alta Performance** com Fastify v5
 - 🔄 **Auto-loading** inteligente de rotas e plugins
 - 📊 **Validação Type-safe** com Zod
@@ -165,13 +164,6 @@ GET  /user-finance-settings      # Obter configurações
 PUT  /user-finance-settings      # Atualizar configurações
 ```
 
-#### 🏦 Integração Bancária (Pluggy)
-
-```http
-POST /pluggy/connect             # Conectar conta bancária
-GET  /pluggy/accounts            # Listar contas conectadas
-POST /pluggy/sync                # Sincronizar transações
-```
 
 ### Exemplos de Uso
 
@@ -261,7 +253,7 @@ graph TB
 | **API** | Rotas HTTP, validação, docs | Fastify routes, Zod schemas |
 | **Application** | Casos de uso, orquestração | CreateTransaction, LoginUser |
 | **Domain** | Regras de negócio, entidades | User, Transaction, Account |
-| **Infrastructure** | Integrações externas | Prisma, JWT, Pluggy API |
+| **Infrastructure** | Integrações externas | Prisma, JWT |
 
 ---
 
@@ -282,7 +274,6 @@ src/
 │   ├── transactions/              # Transações
 │   ├── credit-cards/              # Cartões de crédito
 │   ├── financial-categories/      # Categorias
-│   └── pluggy/                    # Integração bancária
 ├── 📋 schemas/                     # Schemas de validação Zod
 ├── 🎯 domain/                      # Núcleo do negócio
 │   ├── entities/                  # Entidades de domínio
@@ -363,10 +354,6 @@ JWT_REFRESH_EXPIRES_IN="30d"
 # Bcrypt
 BCRYPT_ROUNDS=10
 
-# External APIs (Optional)
-BELVO_SECRET_ID="your-belvo-secret-id"
-BELVO_SECRET_PASSWORD="your-belvo-secret-password"
-BELVO_BASE_URL="https://api.belvo.com"
 ```
 
 ---
@@ -508,7 +495,6 @@ Este projeto está licenciado sob a MIT License - veja o arquivo [LICENSE](LICEN
 - 🗃️ [Documentação Prisma](https://www.prisma.io/docs/)
 - 🔐 [JWT.io](https://jwt.io/)
 - 📋 [Zod Documentation](https://zod.dev/)
-- 🏦 [Pluggy API Docs](https://docs.pluggy.ai/)
 
 ---
 

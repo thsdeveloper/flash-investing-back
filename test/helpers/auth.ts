@@ -189,6 +189,31 @@ export class AuthTestHelper {
   }
 
   /**
+   * Generate a simple access token (alias for generateTokens().accessToken)
+   */
+  generateToken(payload: Pick<TestUser, 'id' | 'name' | 'email'>, expiresIn?: string): string {
+    const tokenPayload: TokenPayload = {
+      sub: payload.id,
+      name: payload.name,
+      email: payload.email,
+    };
+
+    if (expiresIn === '0s') {
+      // Create an already expired token
+      const expiredPayload = {
+        ...tokenPayload,
+        exp: Math.floor(Date.now() / 1000) - 3600, // Expired 1 hour ago
+      };
+      
+      // Use jwt.sign directly to avoid options conflict
+      const jwt = require('jsonwebtoken');
+      return jwt.sign(expiredPayload, this.env.JWT_SECRET);
+    }
+
+    return this.jwtProvider.generateAccessToken(tokenPayload);
+  }
+
+  /**
    * Create an expired token for testing
    */
   generateExpiredToken(user: Pick<TestUser, 'id' | 'name' | 'email'>): string {

@@ -8,7 +8,6 @@ Flash Investing is a **financial management platform** built with Fastify v5, im
 - Personal finance management (transactions, categories, budgeting)
 - Credit card management with invoice tracking
 - Multiple financial account types (bank, wallet, investment)
-- Bank integration via Pluggy/Belvo APIs
 - Budget rules implementation (50/30/20 principle)
 - Comprehensive authentication and authorization
 
@@ -43,7 +42,6 @@ npx tsc --noEmit    # TypeScript type checking without build
 - **Validation**: Zod with fastify-type-provider-zod integration
 - **API Documentation**: Swagger/OpenAPI 3.0 auto-generated
 - **Runtime**: tsx for development (no build step required)
-- **External APIs**: Pluggy/Belvo for bank integrations
 - **HTTP Client**: Axios for external API calls
 
 ### Project Structure
@@ -65,7 +63,6 @@ src/
 │   ├── credit-card-transactions/   # Credit card transactions (/credit-card-transactions/*)
 │   ├── financial-categories/       # Category management (/financial-categories/*)
 │   ├── user-finance-settings/      # User budget settings (/user-finance-settings/*)
-│   └── pluggy/                     # Pluggy integration (/pluggy/*)
 ├── schemas/                         # Reusable Zod schemas
 │   ├── auth.ts                     # Authentication schemas
 │   ├── common.ts                   # Common schemas (pagination, dates)
@@ -107,7 +104,6 @@ src/
 │   │   └── finance-validation.ts   # Finance validation rules
 │   ├── providers/                  # External service providers
 │   │   ├── jwt-provider.ts         # JWT token management
-│   │   └── pluggy-client.ts        # Pluggy API client
 │   └── config/                     # Configuration
 │       └── env.ts                  # Environment validation
 ├── shared/                         # Shared utilities and types
@@ -334,10 +330,6 @@ export const autoPrefix = '/transactions';
 - `GET /user-finance-settings` - Get user budget settings
 - `PUT /user-finance-settings` - Update budget settings
 
-#### External Integrations (`/pluggy/*`)
-- `POST /pluggy/connect` - Connect bank account
-- `GET /pluggy/accounts` - List connected accounts
-- `POST /pluggy/sync` - Sync transactions
 
 ### Request/Response Flow
 ```typescript
@@ -406,7 +398,6 @@ The application includes comprehensive financial management models:
    - `CreditCardTransaction` - Credit card purchases
 
 5. **External Integrations**
-   - Support for Pluggy API connections
    - Bank account synchronization
 
 ### Database Operations
@@ -447,10 +438,6 @@ JWT_REFRESH_EXPIRES_IN="30d"
 # Bcrypt
 BCRYPT_ROUNDS=10
 
-# External APIs (Optional)
-BELVO_SECRET_ID="your-belvo-secret-id"
-BELVO_SECRET_PASSWORD="your-belvo-secret-password"
-BELVO_BASE_URL="https://api.belvo.com"
 ```
 
 ### Environment Validation
@@ -527,7 +514,6 @@ try {
 - **Credit Card System**: Card management with invoice and transaction tracking
 - **Budget Management**: 50/30/20 rule implementation
 - **Category System**: Transaction categorization with budget rules
-- **External Integration**: Pluggy API client for bank connections
 - **Database**: PostgreSQL with Prisma ORM and migrations
 - **API Documentation**: Auto-generated Swagger/OpenAPI docs
 - **Type Safety**: End-to-end TypeScript with Zod validation
@@ -537,7 +523,6 @@ try {
 - **Error Handling**: Domain errors and HTTP error responses
 
 ### 🚧 In Progress
-- **Bank Synchronization**: Pluggy integration for automatic transaction import
 - **Account Transfers**: Transfer between user accounts
 - **Reporting**: Financial summaries and analytics
 

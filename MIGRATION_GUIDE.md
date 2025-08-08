@@ -39,10 +39,6 @@ Este guia documenta a migração de todos os endpoints para o padrão de respost
 - **Status**: **Migrado** ✅
 - **Endpoints**: Perfil do usuário
 
-### 7. Pluggy Integration ✅
-- **Arquivo**: `/src/modules/pluggy/routes/index.ts`
-- **Status**: **Migrado** ✅
-- **Endpoints**: Integração bancária
 
 ### 8. Investments ✅
 - **Arquivo**: `/src/modules/investments/routes/index.ts`

@@ -103,11 +103,6 @@ export default fp(async function (fastify) {
           description: '⚙️ Configuração de orçamento do usuário e planejamento financeiro',
           'x-displayName': '⚙️ Configurações de Orçamento'
         },
-        {
-          name: 'External Integrations',
-          description: '🔗 Integrações bancárias via APIs Pluggy/Belvo',
-          'x-displayName': '🔗 Integrações Externas'
-        }
       ],
       'x-tagGroups': [
         {
@@ -121,10 +116,6 @@ export default fp(async function (fastify) {
         {
           name: '📊 Investimentos',
           tags: ['Investment Portfolios', 'Investment Assets', 'Investment Recommendations']
-        },
-        {
-          name: '🔗 Serviços Externos',
-          tags: ['External Integrations']
         }
       ],
       components: {

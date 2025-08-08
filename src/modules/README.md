@@ -182,7 +182,6 @@ Todos os endpoints seguem o padrão de resposta unificado:
 - ✅ **Financial Accounts Module** - Migrado
 - ✅ **Financial Categories Module** - Migrado
 - ✅ **User Finance Settings Module** - Migrado
-- ✅ **Pluggy Integration Module** - Migrado
 
 ## 🎛️ Swagger Configuration
 
