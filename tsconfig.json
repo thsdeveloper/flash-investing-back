@@ -14,13 +14,12 @@
     "moduleResolution": "node16",
     
     "outDir": "./dist",
-    "rootDir": "./src",
     
     "baseUrl": "./",
     "paths": {
       "@src/*": ["src/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"]
 }
